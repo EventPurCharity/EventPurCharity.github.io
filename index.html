@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PUR Cards — Collection PUR CHARITY</title>
+<style>
+
+:root{color-scheme:dark;--bg:#12011f;--bg2:#2a0646;--tx:#f6ecff;--mu:#b79ad1;--ac:#b44dff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,var(--bg2),var(--bg) 70%) fixed;color:var(--tx);font-family:"Trebuchet MS",system-ui,sans-serif;min-height:100vh}
+main{max-width:1000px;margin:0 auto;padding:20px 14px 60px}
+h1{text-align:center;font-size:clamp(28px,6vw,46px);margin:8px 0 2px;letter-spacing:1px;text-shadow:0 0 18px var(--ac)}
+.sub{text-align:center;color:var(--mu);margin:0 0 18px}
+.bar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:12px 26px;color:#fff;background:linear-gradient(135deg,#8a2be2,#d946ef);font-weight:700;box-shadow:0 0 18px #b44dff88}
+button.ghost{background:#ffffff14;box-shadow:none;padding:8px 16px;font-weight:400}
+button.ghost.on{background:var(--ac)}
+.prog{text-align:center;color:var(--mu);margin-bottom:14px}
+.meter{height:8px;border-radius:9px;background:#ffffff18;max-width:420px;margin:6px auto 0;overflow:hidden}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,#8a2be2,#ffb629)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+.pack{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:10px 0 26px;min-height:0}
+.pack .card{width:150px}
+.card{--c:#9aa0b4;position:relative;border-radius:14px;padding:3px;background:linear-gradient(145deg,var(--c),#0008);text-align:center;animation:pop .5s both}
+.card .in{background:#1a0630;border-radius:11px;padding:10px 8px 8px;height:100%}
+.card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:50%;border:3px solid var(--c);display:block;margin:0 auto 8px;max-width:104px}
+.card b{display:block;font-size:14px;overflow-wrap:anywhere}
+.card small{color:var(--c);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.card img.logo{border-radius:16px;object-fit:contain;max-width:112px}
+.card.rare{box-shadow:0 0 12px #4da3ff88}
+.card.epic{box-shadow:0 0 16px #b44dffcc}
+.card.leg{box-shadow:0 0 22px #ffb629;background:linear-gradient(120deg,#ffb629,#fff2b0,#ff7a18,#ffb629);background-size:300% 300%;animation:pop .5s both,shine 3s linear infinite}
+.card.epic{background:linear-gradient(120deg,#b44dff,#e8c4ff,#6a1bd1,#b44dff);background-size:300% 300%;animation:pop .5s both,shine 4s linear infinite}
+.card.locked{filter:grayscale(1) brightness(.35);box-shadow:none;animation:none}
+.card.locked img{filter:blur(3px)}
+.cnt{position:absolute;top:-6px;right:-6px;background:var(--ac);border-radius:999px;font-size:12px;padding:2px 8px;font-weight:700}
+.new{position:absolute;top:-8px;left:-6px;background:#ffb629;color:#220;border-radius:999px;font-size:11px;padding:2px 8px;font-weight:800}
+@keyframes pop{from{transform:scale(.3) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes shine{to{background-position:300% 0}}
+.cardback{width:150px;height:200px;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:42px;background:repeating-linear-gradient(45deg,#3b0a66,#3b0a66 10px,#4a1180 10px,#4a1180 20px);border:3px solid #d946ef;box-shadow:0 0 14px #b44dff88;animation:pop .5s both;transition:transform .15s}
+.cardback:hover{transform:translateY(-6px) scale(1.04)}
+.ds{font-size:11px;color:var(--mu);margin:6px 0 0;line-height:1.3}
+.card.ultra{--c:#ff4da6;box-shadow:0 0 18px #fff,0 0 40px #ff4da6;background:linear-gradient(120deg,#ff4d4d,#ffb629,#4dff88,#4da3ff,#b44dff,#ff4d4d);background-size:400% 400%;animation:pop .5s both,shine 2.5s linear infinite}
+.ov{position:fixed;inset:0;background:#000b;backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:9;padding:20px}
+.ov[hidden]{display:none}
+.bx{background:#1a0630;border:2px solid var(--ac);border-radius:18px;padding:24px;max-width:360px;width:100%;text-align:center}
+.bx h2{margin:0 0 8px}.bx p{color:var(--mu)}
+.bx input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--ac);background:#12011f;color:var(--tx);font:inherit;text-align:center}
+.er{color:#ff7a8a;min-height:18px;font-size:13px}
+#md .card{width:230px}#md .card img{max-width:150px}#md .ds{font-size:13px}
+button:disabled{opacity:.4;cursor:default}
+footer{text-align:center;color:var(--mu);font-size:12px;margin-top:34px}
+
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;background:#ffffff10;border-radius:12px;padding:8px 12px;margin:6px 0;flex-wrap:wrap}
+select,input{font:inherit;padding:9px;border-radius:10px;border:1px solid var(--ac);background:#12011f;color:var(--tx);max-width:100%}
+h3{margin:18px 0 4px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="cards.js"></script>
+</head><body><main>
+<h1>PUR CARDS</h1>
+<p class="sub">Collectionne les 53 cartes de PUR CHARITY — 4ème édition</p>
+<div id="login" class="bar"><button id="tw">Se connecter avec Twitch</button></div>
+<div id="app" hidden>
+<div class="bar"><span id="who"></span><button class="ghost" id="out">Déconnexion</button></div>
+<div class="bar"><button id="open"></button><button class="ghost" id="all">Tout révéler</button></div>
+<div class="pack" id="pack"></div>
+<div class="bar" id="tabs"></div>
+<div id="v"></div>
+</div>
+<footer>Fan-made · Au profit des P’tits Doudous · 10 boosters par joueur</footer>
+</main><div id="md" class="ov" hidden></div>
+<script>
+const SUPABASE_URL="https://usyolqinkaogwidvvuhh.supabase.co/rest/v1/",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzeW9scWlua2FvZ3dpZHZ2dWhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDE3NDMsImV4cCI6MjEwODUxNzc0M30.bQR0ji_YOnC1uQzQisrlOJfHZuzHCo7r72AsmOgxR48";
+const R={commun:{l:"Commune",w:78,c:"#9aa0b4"},rare:{l:"Rare",w:14,c:"#4da3ff"},epic:{l:"Épique",w:5,c:"#b44dff"},leg:{l:"Légendaire",w:2,c:"#ffb629"},ultra:{l:"Ultra Légendaire",w:1,c:"#ff4da6"}};
+const MAX=10,$=id=>document.getElementById(id);
+let me=null,own={},left=MAX,filt="all",pend={};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function load(){let s=null;try{s=JSON.parse(ls("purcards-v2-"+me))}catch(e){}own=(s&&s.own)||{};left=s&&typeof s.left==="number"?s.left:MAX}
+const save=()=>ls("purcards-v2-"+me,JSON.stringify({own,left}));
+function desc(c){const D={"madamepoulpy_":"La carte la plus rare de PUR CHARITY, en tête d’affiche de la 4ème édition.","PUREsportFR":"En tête d’affiche de PUR CHARITY, 4ème édition.","PurCharity":"L’événement caritatif Twitch dont 100 % des dons sont reversés aux P’tits Doudous.","Les P’tits Doudous":"Des soignants engagés pour les enfants opérés. Bénéficiaire de PUR CHARITY."};
+return D[c.n]||(c.r==="epic"?"Streamer présent en présentiel pour PUR CHARITY, 4ème édition.":"Streamer présent en distanciel pour PUR CHARITY, 4ème édition.")}
+function el(c,o){o=o||{};const d=document.createElement("div");
+d.className="card "+c.r+(o.locked?" locked":"");d.style.setProperty("--c",R[c.r].c);
+d.innerHTML=`<div class="in"><img class="${c.l?"logo":""}" src="${c.i}" alt=""><b>${o.locked?"???":c.n}</b><small>${R[c.r].l}</small>${o.desc?`<p class="ds">${desc(c)}</p>`:""}</div>`+(o.n>1?`<span class="cnt">×${o.n}</span>`:"")+(o.isNew?`<span class="new">NEW</span>`:"");return d}
+
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const byId=Object.fromEntries(CARDS.map(c=>[c.n,c]));
+let names={},tab="coll",friends=[],trades=[],prof=null;
+const esc=t=>String(t).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const nm=id=>esc(names[id]||"?"),opt=(v,t)=>`<option value="${esc(v)}">${esc(t)}</option>`;
+async function rpc(n,a){const r=await sb.rpc(n,a||{});if(r.error){alert("Erreur : "+r.error.message);throw r.error}return r.data}
+async function refresh(){
+const [p,inv,fr,tr]=await Promise.all([sb.from("profiles").select("*").eq("id",me).maybeSingle(),sb.from("inventory").select("card_id,qty").eq("user_id",me),sb.from("friendships").select("*"),sb.from("trades").select("*").order("id",{ascending:false}).limit(60)]);
+prof=p.data;left=prof?prof.boosters_left:0;own={};(inv.data||[]).forEach(r=>own[r.card_id]=r.qty);
+friends=fr.data||[];trades=tr.data||[];
+const ids=new Set([me]);friends.forEach(f=>{ids.add(f.requester);ids.add(f.addressee)});trades.forEach(t=>{ids.add(t.from_user);ids.add(t.to_user)});
+const n=await sb.from("profiles").select("id,twitch_name").in("id",[...ids]);names={};(n.data||[]).forEach(r=>names[r.id]=r.twitch_name)}
+function ui(){const b=$("open");b.disabled=left<1;b.textContent=left>0?`Ouvrir un booster (${left}/${MAX} restants)`:"Tous tes boosters sont ouverts"}
+$("open").onclick=async()=>{if(left<1)return;$("open").disabled=true;let ids;
+try{ids=await rpc("open_booster")}catch(e){ui();return}
+const p=$("pack");p.innerHTML="";left--;
+ids.forEach((id,i)=>{const c=byId[id],isNew=!own[id];own[id]=(own[id]||0)+1;pend[id]=(pend[id]||0)+1;
+const s=document.createElement("div");s.className="cardback";s.textContent="💜";s.style.animationDelay=i*.1+"s";
+s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));if(tab==="coll")view()};p.appendChild(s)});
+ui();view()};
+$("all").onclick=()=>[...$("pack").querySelectorAll(".cardback")].forEach(b=>b.click());
+$("md").onclick=()=>{$("md").hidden=true};
+function buildTabs(){const t=$("tabs");t.innerHTML="";[["coll","Collection"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
+const b=document.createElement("button");b.className="ghost"+(k===tab?" on":"");b.textContent=l;
+b.onclick=async()=>{tab=k;buildTabs();if(k!=="coll")await refresh();view()};t.appendChild(b)})}
+function view(){const v=$("v");if(tab==="coll")coll(v);else if(tab==="fr")fr(v);else tr(v)}
+function coll(v){
+v.innerHTML='<div class="prog"><span id="pt"></span><div class="meter"><i id="pb"></i></div></div><div class="bar" id="flt"></div><div class="grid" id="grid"></div>';
+[["all","Toutes"]].concat(Object.keys(R).map(k=>[k,R[k].l])).forEach(([k,l])=>{const b=document.createElement("button");b.className="ghost"+(k===filt?" on":"");b.textContent=l;
+b.onclick=()=>{filt=k;coll(v)};$("flt").appendChild(b)});
+const g=$("grid");
+CARDS.filter(c=>filt==="all"||c.r===filt).sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{
+const n=(own[c.n]||0)-(pend[c.n]||0),d=el(c,{locked:!n,n});
+if(n){d.style.cursor="pointer";d.onclick=()=>{const m=$("md");m.innerHTML="";m.appendChild(el(c,{desc:1,n}));m.hidden=false}}
+g.appendChild(d)});
+const u=CARDS.filter(c=>(own[c.n]||0)-(pend[c.n]||0)>0).length;
+$("pt").textContent=u+" / "+CARDS.length+" cartes découvertes";$("pb").style.width=(u/CARDS.length*100)+"%"}
+function fr(v){
+const other=f=>f.requester===me?f.addressee:f.requester,row=(t,b)=>`<div class="row"><span>${t}</span><span>${b}</span></div>`;
+const acc=friends.filter(f=>f.status==="accepted"),inc=friends.filter(f=>f.status==="pending"&&f.addressee===me),out=friends.filter(f=>f.status==="pending"&&f.requester===me);
+v.innerHTML=`<div class="bar"><input id="fn" placeholder="Pseudo Twitch d’un ami"><button id="fa">Ajouter</button></div>
+<h3>Demandes reçues</h3>${inc.map(f=>row(nm(f.requester),`<button data-a="acc" data-i="${f.id}">Accepter</button> <button class="ghost" data-a="del" data-i="${f.id}">Refuser</button>`)).join("")||"<p class='sub'>Aucune</p>"}
+<h3>Amis</h3>${acc.map(f=>row(nm(other(f)),`<button class="ghost" data-a="del" data-i="${f.id}">Retirer</button>`)).join("")||"<p class='sub'>Aucun ami pour l’instant</p>"}
+<h3>Demandes envoyées</h3>${out.map(f=>row(nm(f.addressee),`<button class="ghost" data-a="del" data-i="${f.id}">Annuler</button>`)).join("")||"<p class='sub'>Aucune</p>"}`;
+$("fa").onclick=async()=>{const n=$("fn").value.trim();if(!n)return;try{await rpc("send_friend_request",{p_name:n})}catch(e){return}await refresh();fr(v)}}
+function tr(v){
+const fl=friends.filter(f=>f.status==="accepted").map(f=>f.requester===me?f.addressee:f.requester);
+const mine=Object.keys(own).filter(k=>own[k]-(pend[k]||0)>0),row=(t,b)=>`<div class="row"><span>${t}</span><span>${b}</span></div>`;
+const txt=t=>`${nm(t.from_user)} → ${nm(t.to_user)} : ${esc(t.give_card)} contre ${esc(t.want_card)}`;
+const inc=trades.filter(t=>t.status==="pending"&&t.to_user===me),out=trades.filter(t=>t.status==="pending"&&t.from_user===me),old=trades.filter(t=>t.status!=="pending").slice(0,8);
+v.innerHTML=fl.length?`<h3>Proposer un échange</h3><div class="bar"><select id="tf">${fl.map(i=>opt(i,names[i])).join("")}</select>
+<select id="tg">${mine.map(k=>opt(k,"Je donne : "+k)).join("")}</select><select id="tw2"></select><button id="tp">Proposer</button></div>
+<h3>Reçus</h3>${inc.map(t=>row(txt(t),`<button data-a="tacc" data-i="${t.id}">Accepter</button> <button class="ghost" data-a="tno" data-i="${t.id}">Refuser</button>`)).join("")||"<p class='sub'>Aucun</p>"}
+<h3>Envoyés</h3>${out.map(t=>row(txt(t),`<button class="ghost" data-a="tno" data-i="${t.id}">Annuler</button>`)).join("")||"<p class='sub'>Aucun</p>"}
+<h3>Historique</h3>${old.map(t=>row(txt(t),esc(t.status))).join("")||"<p class='sub'>Vide</p>"}`:"<p class='sub'>Ajoute d’abord un ami dans l’onglet Amis.</p>";
+if(!fl.length)return;
+const loadWant=async()=>{const r=await sb.from("inventory").select("card_id").eq("user_id",$("tf").value);$("tw2").innerHTML=(r.data||[]).map(x=>opt(x.card_id,"Je veux : "+x.card_id)).join("")};
+$("tf").onchange=loadWant;loadWant();
+$("tp").onclick=async()=>{if(!$("tg").value||!$("tw2").value)return alert("Choisis les deux cartes.");
+try{await rpc("propose_trade",{p_to:$("tf").value,p_give:$("tg").value,p_want:$("tw2").value})}catch(e){return}await refresh();tr(v)}}
+$("v").onclick=async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,p_id=+b.dataset.i;
+try{if(a==="acc")await rpc("accept_friend",{p_id});else if(a==="del")await rpc("remove_friend",{p_id});else if(a==="tacc")await rpc("accept_trade",{p_id});else await rpc("respond_trade",{p_id})}catch(x){return}
+await refresh();ui();view()};
+async function boot(){const r=await sb.auth.getSession(),u=r.data.session&&r.data.session.user;
+$("login").hidden=!!u;$("app").hidden=!u;if(!u)return;me=u.id;await refresh();
+$("who").textContent="Connecté : "+(prof?prof.twitch_name:"");ui();buildTabs();view()}
+$("tw").onclick=()=>sb.auth.signInWithOAuth({provider:"twitch",options:{redirectTo:location.origin+location.pathname}});
+$("out").onclick=async()=>{await sb.auth.signOut();location.reload()};
+boot();
+</script></body></html>
