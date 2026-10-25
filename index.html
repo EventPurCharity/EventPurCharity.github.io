@@ -7,8 +7,22 @@
 :root{color-scheme:dark;--bg:#12011f;--bg2:#2a0646;--tx:#f6ecff;--mu:#b79ad1;--ac:#b44dff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at top,var(--bg2),var(--bg) 70%) fixed;color:var(--tx);font-family:"Trebuchet MS",system-ui,sans-serif;min-height:100vh}
-main{max-width:1000px;margin:0 auto;padding:20px 14px 60px}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,#6a1bb355,transparent 60%),linear-gradient(115deg,transparent 38%,#ffffff0c 47%,transparent 56%),linear-gradient(180deg,#2e0750,#1a0230 55%,#12011f) fixed;color:var(--tx);font-family:"Oswald","Arial Narrow",system-ui,sans-serif;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(#ffffff09 1px,transparent 1px);background-size:4px 4px;pointer-events:none}
+.hearts{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.hearts span{position:absolute;bottom:-40px;color:#a78bfa;text-shadow:0 0 12px #a855f7;opacity:.45;animation:fl linear infinite}
+@keyframes fl{to{transform:translateY(-115vh) rotate(25deg)}}
+.hd{text-align:center;margin:6px 0 10px}
+.hd .k{font-family:"Archivo Black",Impact,sans-serif;letter-spacing:3px;font-size:clamp(13px,2.6vw,22px);color:#fff;text-shadow:0 0 12px #c026d3,0 0 26px #a855f7;margin:0 0 12px}
+.hd .pt{display:inline-block;background:#1a0630cc;border:1px solid #ffffff22;border-radius:22px;padding:10px 16px 8px;box-shadow:0 0 24px #0009;text-decoration:none}
+.hd .pt img{display:block;height:clamp(100px,16vw,150px);margin:0 auto}
+.hd .pt span{display:block;font-weight:700;font-size:12px;letter-spacing:2px;color:#d7c5ee;margin-top:6px;text-transform:uppercase}
+.hd .lg{display:block;margin:12px auto 0;width:min(420px,80%);filter:drop-shadow(0 0 18px #a855f7aa)}
+.hd .ed{display:block;margin:0 auto;width:min(220px,50%)}
+.ft{text-align:center;border-top:1px solid #a855f755;padding-top:22px;margin-top:44px;color:#cdbbe6;font-size:15px;letter-spacing:.5px}
+.ft a{color:#d8b4fe}.ft p{margin:6px 0}
+main{max-width:1000px;margin:0 auto;padding:20px 14px 60px;position:relative;z-index:1}
 h1{text-align:center;font-size:clamp(28px,6vw,46px);margin:8px 0 2px;letter-spacing:1px;text-shadow:0 0 18px var(--ac)}
 .sub{text-align:center;color:var(--mu);margin:0 0 18px}
 .bar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
@@ -57,18 +71,22 @@ h3{margin:18px 0 4px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="cards.js"></script>
-</head><body><main>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+</head><body><div class="hearts" id="hearts"></div><main>
+<header class="hd"><p class="k">ÉVÉNEMENT CARITATIF AU PROFIT DE</p>
+<a class="pt" href="https://lesptitsdoudous.org/" target="_blank" rel="noopener"><img src="https://purcharity.github.io/logo-ptits-doudous.png" alt="Association Les P’tits Doudous"><span>Découvrir l’association</span></a>
+<img class="lg" src="https://purcharity.github.io/logo-purcharity.png" alt="PUR CHARITY"><img class="ed" src="https://purcharity.github.io/titre-4eme-edition.png" alt="4ème édition"></header>
 <h1>PUR CARDS</h1>
 <p class="sub">Collectionne les 53 cartes de PUR CHARITY — 4ème édition</p>
 <div id="login" class="bar"><button id="tw">Se connecter avec Twitch</button></div>
 <div id="app" hidden>
-<div class="bar"><span id="who"></span><button class="ghost" id="out">Déconnexion</button></div>
+<div class="bar"><span id="who"></span><button class="ghost" id="sw">Changer de compte</button><button class="ghost" id="out">Déconnexion</button></div>
 <div class="bar"><button id="open"></button><button class="ghost" id="all">Tout révéler</button></div>
 <div class="pack" id="pack"></div>
 <div class="bar" id="tabs"></div>
 <div id="v"></div>
 </div>
-<footer>Fan-made · Au profit des P’tits Doudous · 10 boosters par joueur</footer>
+<footer class="ft"><p>100 % des dons sont reversés à l’association <a href="https://lesptitsdoudous.org/" target="_blank" rel="noopener">Les P’tits Doudous</a>.</p><p>PUR CHARITY · 4ème édition</p></footer>
 </main><div id="md" class="ov" hidden></div>
 <script>
 const SUPABASE_URL="https://usyolqinkaogwidvvuhh.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzeW9scWlua2FvZ3dpZHZ2dWhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDE3NDMsImV4cCI6MjEwODUxNzc0M30.bQR0ji_YOnC1uQzQisrlOJfHZuzHCo7r72AsmOgxR48";
@@ -78,8 +96,9 @@ let me=null,own={},left=MAX,filt="all",pend={};
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 function load(){let s=null;try{s=JSON.parse(ls("purcards-v2-"+me))}catch(e){}own=(s&&s.own)||{};left=s&&typeof s.left==="number"?s.left:MAX}
 const save=()=>ls("purcards-v2-"+me,JSON.stringify({own,left}));
+const FEM=new Set(["madamepoulpy_", "sahaku__", "clodeau", "Laeticia_M", "Aresia", "toospycy", "nekonamc", "foxienox", "liyounee", "hannohi", "ilobee", "mespiaa", "theauu_", "gompubx", "meryyn_", "Acostya", "Mylanne"]); // noms des streameuses, ex : ["azzuria_","Aresia"]
 function desc(c){const D={"madamepoulpy_":"La carte la plus rare de PUR CHARITY, en tête d’affiche de la 4ème édition.","PUREsportFR":"En tête d’affiche de PUR CHARITY, 4ème édition.","PurCharity":"L’événement caritatif Twitch dont 100 % des dons sont reversés aux P’tits Doudous.","Les P’tits Doudous":"Des soignants engagés pour les enfants opérés. Bénéficiaire de PUR CHARITY."};
-return D[c.n]||(c.r==="epic"?"Streamer présent en présentiel pour PUR CHARITY, 4ème édition.":"Streamer présent en distanciel pour PUR CHARITY, 4ème édition.")}
+const f=FEM.has(c.n);return D[c.n]||`${f?"Streameuse présente":"Streamer présent"} ${c.r==="epic"?"en présentiel":"en distanciel"} pour PUR CHARITY, 4ème édition.`}
 function el(c,o){o=o||{};const d=document.createElement("div");
 d.className="card "+c.r+(o.locked?" locked":"");d.style.setProperty("--c",R[c.r].c);
 d.innerHTML=`<div class="in"><img class="${c.l?"logo":""}" src="${c.i}" alt=""><b>${o.locked?"???":c.n}</b><small>${R[c.r].l}</small>${o.desc?`<p class="ds">${desc(c)}</p>`:""}</div>`+(o.n>1?`<span class="cnt">×${o.n}</span>`:"")+(o.isNew?`<span class="new">NEW</span>`:"");return d}
@@ -96,19 +115,20 @@ prof=p.data;left=prof?prof.boosters_left:0;own={};(inv.data||[]).forEach(r=>own[
 friends=fr.data||[];trades=tr.data||[];
 const ids=new Set([me]);friends.forEach(f=>{ids.add(f.requester);ids.add(f.addressee)});trades.forEach(t=>{ids.add(t.from_user);ids.add(t.to_user)});
 const n=await sb.from("profiles").select("id,twitch_name").in("id",[...ids]);names={};(n.data||[]).forEach(r=>names[r.id]=r.twitch_name)}
-function ui(){const b=$("open");b.disabled=left<1;b.textContent=left>0?`Ouvrir un booster (${left}/${MAX} restants)`:"Tous tes boosters sont ouverts"}
-$("open").onclick=async()=>{if(left<1)return;$("open").disabled=true;let ids;
+function ui(){const b=$("open"),un=!!$("pack").querySelector(".cardback");b.disabled=left<1||un;b.textContent=left<1?"Tous tes boosters sont ouverts":un?"Retourne d’abord toutes les cartes":`Ouvrir un booster (${left}/${MAX} restants)`}
+$("open").onclick=async()=>{if(left<1||$("pack").querySelector(".cardback"))return;$("open").disabled=true;let ids;
 try{ids=await rpc("open_booster")}catch(e){ui();return}
 const p=$("pack");p.innerHTML="";left--;
 ids.forEach((id,i)=>{const c=byId[id],isNew=!own[id];own[id]=(own[id]||0)+1;pend[id]=(pend[id]||0)+1;
 const s=document.createElement("div");s.className="cardback";s.textContent="💜";s.style.animationDelay=i*.1+"s";
-s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));if(tab==="coll")view()};p.appendChild(s)});
+s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="coll")view()};p.appendChild(s)});
 ui();view()};
 $("all").onclick=()=>[...$("pack").querySelectorAll(".cardback")].forEach(b=>b.click());
 $("md").onclick=()=>{$("md").hidden=true};
 function buildTabs(){const t=$("tabs");t.innerHTML="";[["coll","Collection"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
 const b=document.createElement("button");b.className="ghost"+(k===tab?" on":"");b.textContent=l;
-b.onclick=async()=>{tab=k;buildTabs();if(k!=="coll")await refresh();view()};t.appendChild(b)})}
+b.onclick=async()=>{tab=k;buildTabs();if(k!=="coll")await refresh();view()};t.appendChild(b)});
+const lv=document.createElement("button");lv.className="ghost";lv.textContent="🔴 Live";lv.onclick=()=>window.open("https://purcharity.github.io","_blank","noopener");t.appendChild(lv)}
 function view(){const v=$("v");if(tab==="coll")coll(v);else if(tab==="fr")fr(v);else tr(v)}
 function coll(v){
 v.innerHTML='<div class="prog"><span id="pt"></span><div class="meter"><i id="pb"></i></div></div><div class="bar" id="flt"></div><div class="grid" id="grid"></div>';
@@ -152,5 +172,7 @@ $("login").hidden=!!u;$("app").hidden=!u;if(!u)return;me=u.id;await refresh();
 $("who").textContent="Connecté : "+(prof?prof.twitch_name:"");ui();buildTabs();view()}
 $("tw").onclick=()=>sb.auth.signInWithOAuth({provider:"twitch",options:{redirectTo:location.origin+location.pathname}});
 $("out").onclick=async()=>{await sb.auth.signOut();location.reload()};
+$("sw").onclick=async()=>{await sb.auth.signOut();await sb.auth.signInWithOAuth({provider:"twitch",options:{redirectTo:location.origin+location.pathname,queryParams:{force_verify:"true"}}})};
+(()=>{const h=$("hearts");for(let i=0;i<22;i++){const e=document.createElement("span");e.textContent="♥";e.style.left=Math.random()*100+"%";e.style.fontSize=(10+Math.random()*22)+"px";e.style.animationDuration=(14+Math.random()*22)+"s";e.style.animationDelay=(-Math.random()*30)+"s";h.appendChild(e)}})();
 boot();
 </script></body></html>
