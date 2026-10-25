@@ -90,7 +90,7 @@ h3{margin:18px 0 4px}
 <p class="sub">Collectionne les 53 cartes de PUR CHARITY — 4ème édition</p>
 <div id="login" class="bar"><button id="tw">Se connecter avec Twitch</button></div>
 <div id="app" hidden>
-<div class="bar"><span id="who"></span><button class="ghost" id="bell">🔔<span class="dot" id="bn" hidden></span></button><button class="ghost" id="sw">Changer de compte</button><button class="ghost" id="out">Déconnexion</button></div>
+<div class="bar"><span id="who"></span><button class="ghost" id="sw">Changer de compte</button><button class="ghost" id="out">Déconnexion</button></div>
 <div class="bar"><button id="open"></button><button class="ghost" id="all">Tout révéler</button></div>
 <div class="pack" id="pack"></div>
 <div class="bar" id="tabs"></div>
@@ -128,7 +128,7 @@ friends=fs.data||[];trades=ts.data||[];notes=nt.data||[];
 tradeItems={};(ti.data||[]).forEach(r=>{(tradeItems[r.trade_id]=tradeItems[r.trade_id]||{give:[],want:[]})[r.side].push(r.card_id)});
 const ids=new Set([me]);friends.forEach(f=>{ids.add(f.requester);ids.add(f.addressee)});trades.forEach(t=>{ids.add(t.from_user);ids.add(t.to_user)});
 const n=await sb.from("profiles").select("id,twitch_name").in("id",[...ids]);names={};(n.data||[]).forEach(r=>names[r.id]=r.twitch_name);bell()}
-function bell(){const n=notes.filter(x=>!x.read).length;$("bn").textContent=n;$("bn").hidden=!n}
+function bell(){if(!$("bn"))return;const n=notes.filter(x=>!x.read).length;$("bn").textContent=n;$("bn").hidden=!n}
 function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),5000)}
 async function poll(){if(!me||document.hidden)return;const r=await sb.from("notifications").select("*").order("id",{ascending:false}).limit(30);if(r.error)return;
 const nn=r.data||[],fresh=nn.filter(n=>n.id>lastNid&&!n.read);if(nn.length)lastNid=Math.max(lastNid,nn[0].id);
@@ -139,7 +139,6 @@ function showNotes(){const o=$("tmv");o.hidden=false;
 o.innerHTML=`<div class="tm" style="max-width:480px"><div class="hd2 row" style="margin:0"><b>Notifications</b><button class="ghost" id="tx">✕</button></div><div class="gr nl">${notes.map(n=>`<div class="ni${n.read?"":" un"}">${esc(n.msg)}<br><small style="color:var(--mu)">${esc(new Date(n.created_at).toLocaleString("fr-FR"))}</small></div>`).join("")||"<p class='sub'>Aucune notification</p>"}</div></div>`;
 $("tx").onclick=closeT;
 if(notes.some(n=>!n.read))rpc("mark_notifications_read").then(()=>{notes.forEach(n=>n.read=true);bell()}).catch(()=>{})}
-$("bell").onclick=showNotes;
 function ui(){const b=$("open"),un=!!$("pack").querySelector(".cardback");b.disabled=left<1||un;b.textContent=left<1?"Tous tes boosters sont ouverts":un?"Retourne d’abord toutes les cartes":`Ouvrir un booster (${left}/${MAX} restants)`}
 $("open").onclick=async()=>{if(left<1||$("pack").querySelector(".cardback"))return;$("open").disabled=true;let ids;
 try{ids=await rpc("open_booster")}catch(e){ui();return}
@@ -151,10 +150,10 @@ ui();view()};
 $("all").onclick=()=>[...$("pack").querySelectorAll(".cardback")].forEach(b=>b.click());
 $("md").onclick=()=>{$("md").hidden=true};
 function badge(k){return k==="fr"?friends.filter(f=>f.status==="pending"&&f.addressee===me).length:k==="tr"?trades.filter(t=>t.status==="pending"&&t.to_user===me).length:0}
-function buildTabs(){const t=$("tabs");t.innerHTML="";[["coll","Collection"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
+function buildTabs(){const t=$("tabs");t.innerHTML="";const bb=document.createElement("button");bb.className="ghost";bb.id="bell";bb.innerHTML='🔔<span class="dot" id="bn" hidden></span>';bb.onclick=showNotes;t.appendChild(bb);[["coll","Collection"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
 const b=document.createElement("button");b.className="ghost"+(k===tab?" on":"");b.textContent=l;const n=badge(k);if(n){const d=document.createElement("span");d.className="dot";d.textContent=n;b.appendChild(d)}
 b.onclick=async()=>{tab=k;if(k!=="coll")await refresh();buildTabs();view()};t.appendChild(b)});
-const lv=document.createElement("button");lv.className="ghost";lv.textContent="🔴 Live";lv.onclick=()=>window.open("https://purcharity.github.io","_blank","noopener");t.appendChild(lv)}
+const lv=document.createElement("button");lv.className="ghost";lv.textContent="🔴 Live";lv.onclick=()=>window.open("https://purcharity.github.io","_blank","noopener");t.appendChild(lv);bell()}
 function view(){const v=$("v");if(tab==="coll")coll(v);else if(tab==="fr")fr(v);else tr(v)}
 function coll(v){
 v.innerHTML='<div class="prog"><span id="pt"></span><div class="meter"><i id="pb"></i></div></div><div class="bar" id="flt"></div><div class="grid" id="grid"></div>';
@@ -172,7 +171,7 @@ const other=f=>f.requester===me?f.addressee:f.requester,row=(t,b)=>`<div class="
 const acc=friends.filter(f=>f.status==="accepted"),inc=friends.filter(f=>f.status==="pending"&&f.addressee===me),out=friends.filter(f=>f.status==="pending"&&f.requester===me);
 v.innerHTML=`<div class="bar"><input id="fn" placeholder="Pseudo Twitch d’un ami"><button id="fa">Ajouter</button></div>
 <h3>Demandes reçues</h3>${inc.map(f=>row(nm(f.requester),`<button data-a="acc" data-i="${f.id}">Accepter</button> <button class="ghost" data-a="del" data-i="${f.id}">Refuser</button>`)).join("")||"<p class='sub'>Aucune</p>"}
-<h3>Amis</h3>${acc.map(f=>row(nm(other(f)),`<button class="ghost" data-a="del" data-i="${f.id}">Retirer</button>`)).join("")||"<p class='sub'>Aucun ami pour l’instant</p>"}
+<h3>Amis</h3>${acc.map(f=>row(nm(other(f)),`<button class="ghost" data-a="fcol" data-f="${esc(other(f))}">Voir la collection</button> <button class="ghost" data-a="del" data-i="${f.id}">Retirer</button>`)).join("")||"<p class='sub'>Aucun ami pour l’instant</p>"}
 <h3>Demandes envoyées</h3>${out.map(f=>row(nm(f.addressee),`<button class="ghost" data-a="del" data-i="${f.id}">Annuler</button>`)).join("")||"<p class='sub'>Aucune</p>"}`;
 $("fa").onclick=async()=>{const n=$("fn").value.trim();if(!n)return;try{await rpc("send_friend_request",{p_name:n})}catch(e){return}await refresh();fr(v)}}
 function tr(v){
@@ -186,6 +185,11 @@ d.innerHTML=`<b>${sent?"Offre envoyée à ":"Offre reçue de "}${nm(o)}${t.paren
 it.give.forEach(c=>byId[c]&&d.querySelector("#g").appendChild(el(byId[c])));it.want.forEach(c=>byId[c]&&d.querySelector("#w").appendChild(el(byId[c])));
 const a=d.querySelector(".ac"),i=t.id;
 a.innerHTML=t.status!=="pending"?`<span>${esc(ST[t.status]||t.status)}</span>`:sent?`<button class="ghost" data-a="tno" data-i="${i}">Annuler l’offre</button>`:`<button data-a="tacc" data-i="${i}">Accepter</button><button class="ghost" data-a="tctr" data-i="${i}">Contre-offre</button><button class="ghost" data-a="tno" data-i="${i}">Refuser</button>`;return d}
+async function friendColl(fid){const r=await sb.from("inventory").select("card_id,qty").eq("user_id",fid),inv={};(r.data||[]).forEach(x=>inv[x.card_id]=x.qty);
+const o=$("tmv"),u=CARDS.filter(c=>inv[c.n]).length;o.hidden=false;
+o.innerHTML=`<div class="tm"><div class="hd2 row" style="margin:0"><b>Collection de ${nm(fid)}</b><button class="ghost" id="tx">✕</button></div><div class="sm" style="text-align:center;color:var(--mu)">${u} / ${CARDS.length} cartes découvertes</div><div class="gr"><div class="grid" id="fg"></div></div></div>`;
+$("tx").onclick=closeT;
+CARDS.slice().sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{const n=inv[c.n]||0;$("fg").appendChild(el(c,{locked:!n,n}))})}
 function pickFriend(){const fl=friends.filter(f=>f.status==="accepted").map(f=>f.requester===me?f.addressee:f.requester),o=$("tmv");o.hidden=false;
 o.innerHTML=`<div class="tm" style="max-width:480px"><div class="hd2 row" style="margin:0"><b>Choisir un ami</b><button class="ghost" id="tx">✕</button></div><div class="sm"><input id="fs" placeholder="Rechercher…" style="width:100%"></div><div class="gr" id="fl"></div></div>`;
 $("tx").onclick=closeT;
@@ -213,6 +217,7 @@ try{if(parent)await rpc("counter_trade",{p_id:parent.id,p_give:give,p_want:want}
 closeT();tab="tr";trSub="out";await refresh();buildTabs();view()};drawGrid()};
 shell()}
 $("v").onclick=async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,p_id=+b.dataset.i;
+if(a==="fcol"){friendColl(b.dataset.f);return}
 if(a==="tctr"){const t=trades.find(x=>x.id===p_id);if(t)openTrade(t.from_user,t);return}
 try{if(a==="acc")await rpc("accept_friend",{p_id});else if(a==="del")await rpc("remove_friend",{p_id});else if(a==="tacc")await rpc("accept_trade",{p_id});else await rpc("respond_trade",{p_id})}catch(x){return}
 await refresh();ui();buildTabs();view()};
