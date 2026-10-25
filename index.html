@@ -68,6 +68,16 @@ footer{text-align:center;color:var(--mu);font-size:12px;margin-top:34px}
 .row{display:flex;gap:8px;align-items:center;justify-content:space-between;background:#ffffff10;border-radius:12px;padding:8px 12px;margin:6px 0;flex-wrap:wrap}
 select,input{font:inherit;padding:9px;border-radius:10px;border:1px solid var(--ac);background:#12011f;color:var(--tx);max-width:100%}
 h3{margin:18px 0 4px}
+.dot{background:#ff3b6b;color:#fff;border-radius:999px;font-size:11px;padding:1px 7px;margin-left:6px}
+.toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:20;background:#1a0630;border:2px solid var(--ac);border-radius:14px;padding:12px 16px;max-width:300px;box-shadow:0 0 20px #b44dff88;animation:pop .3s both}
+.nl{text-align:left}.ni{padding:10px;border-radius:10px;margin:6px 0;background:#ffffff10;font-size:14px}.ni.un{background:#b44dff33;border-left:3px solid var(--ac)}
+.tm{background:#12011ff2;border:2px solid var(--ac);border-radius:18px;width:min(980px,100%);max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.tm .hd2,.tm .sm,.tm .ft2{padding:10px 16px}.tm .gr{overflow:auto;padding:10px 16px;flex:1}.tm .ft2{display:flex;gap:10px}.tm .ft2 button{flex:1}
+.card.sel{outline:3px solid #34d399;outline-offset:2px}
+.card.sel::after{content:"✓";position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:#34d399;color:#031;border-radius:50%;width:22px;height:22px;line-height:22px;font-weight:800;font-size:14px}
+.mini{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.mini .card{width:96px}.mini .card img{max-width:52px}.mini .card b{font-size:11px}.mini .card small{font-size:9px}
+.tc{background:#ffffff10;border-radius:14px;padding:12px;margin:10px 0}.tc .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.tc h4{margin:0 0 6px;color:var(--mu);font-weight:400;text-align:center}.tc .ac{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="cards.js"></script>
@@ -80,14 +90,14 @@ h3{margin:18px 0 4px}
 <p class="sub">Collectionne les 53 cartes de PUR CHARITY — 4ème édition</p>
 <div id="login" class="bar"><button id="tw">Se connecter avec Twitch</button></div>
 <div id="app" hidden>
-<div class="bar"><span id="who"></span><button class="ghost" id="sw">Changer de compte</button><button class="ghost" id="out">Déconnexion</button></div>
+<div class="bar"><span id="who"></span><button class="ghost" id="bell">🔔<span class="dot" id="bn" hidden></span></button><button class="ghost" id="sw">Changer de compte</button><button class="ghost" id="out">Déconnexion</button></div>
 <div class="bar"><button id="open"></button><button class="ghost" id="all">Tout révéler</button></div>
 <div class="pack" id="pack"></div>
 <div class="bar" id="tabs"></div>
 <div id="v"></div>
 </div>
 <footer class="ft"><p>100 % des dons sont reversés à l’association <a href="https://lesptitsdoudous.org/" target="_blank" rel="noopener">Les P’tits Doudous</a>.</p><p>PUR CHARITY · 4ème édition</p></footer>
-</main><div id="md" class="ov" hidden></div>
+</main><div id="md" class="ov" hidden></div><div id="tmv" class="ov" hidden></div>
 <script>
 const SUPABASE_URL="https://usyolqinkaogwidvvuhh.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzeW9scWlua2FvZ3dpZHZ2dWhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDE3NDMsImV4cCI6MjEwODUxNzc0M30.bQR0ji_YOnC1uQzQisrlOJfHZuzHCo7r72AsmOgxR48";
 const R={commun:{l:"Commune",w:78,c:"#9aa0b4"},rare:{l:"Rare",w:14,c:"#4da3ff"},epic:{l:"Épique",w:5,c:"#b44dff"},leg:{l:"Légendaire",w:2,c:"#ffb629"},ultra:{l:"Ultra Légendaire",w:1,c:"#ff4da6"}};
@@ -109,12 +119,27 @@ let names={},tab="coll",friends=[],trades=[],prof=null;
 const esc=t=>String(t).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const nm=id=>esc(names[id]||"?"),opt=(v,t)=>`<option value="${esc(v)}">${esc(t)}</option>`;
 async function rpc(n,a){const r=await sb.rpc(n,a||{});if(r.error){alert("Erreur : "+r.error.message);throw r.error}return r.data}
+let trSub="in",tradeItems={},notes=[],lastNid=0;
+const ST={accepted:"Acceptée",declined:"Refusée",cancelled:"Annulée",countered:"Contre-proposée"};
 async function refresh(){
-const [p,inv,fr,tr]=await Promise.all([sb.from("profiles").select("*").eq("id",me).maybeSingle(),sb.from("inventory").select("card_id,qty").eq("user_id",me),sb.from("friendships").select("*"),sb.from("trades").select("*").order("id",{ascending:false}).limit(60)]);
+const [p,inv,fs,ts,ti,nt]=await Promise.all([sb.from("profiles").select("*").eq("id",me).maybeSingle(),sb.from("inventory").select("card_id,qty").eq("user_id",me),sb.from("friendships").select("*"),sb.from("trades").select("*").order("id",{ascending:false}).limit(60),sb.from("trade_items").select("*"),sb.from("notifications").select("*").order("id",{ascending:false}).limit(30)]);
 prof=p.data;left=prof?prof.boosters_left:0;own={};(inv.data||[]).forEach(r=>own[r.card_id]=r.qty);
-friends=fr.data||[];trades=tr.data||[];
+friends=fs.data||[];trades=ts.data||[];notes=nt.data||[];
+tradeItems={};(ti.data||[]).forEach(r=>{(tradeItems[r.trade_id]=tradeItems[r.trade_id]||{give:[],want:[]})[r.side].push(r.card_id)});
 const ids=new Set([me]);friends.forEach(f=>{ids.add(f.requester);ids.add(f.addressee)});trades.forEach(t=>{ids.add(t.from_user);ids.add(t.to_user)});
-const n=await sb.from("profiles").select("id,twitch_name").in("id",[...ids]);names={};(n.data||[]).forEach(r=>names[r.id]=r.twitch_name)}
+const n=await sb.from("profiles").select("id,twitch_name").in("id",[...ids]);names={};(n.data||[]).forEach(r=>names[r.id]=r.twitch_name);bell()}
+function bell(){const n=notes.filter(x=>!x.read).length;$("bn").textContent=n;$("bn").hidden=!n}
+function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),5000)}
+async function poll(){if(!me||document.hidden)return;const r=await sb.from("notifications").select("*").order("id",{ascending:false}).limit(30);if(r.error)return;
+const nn=r.data||[],fresh=nn.filter(n=>n.id>lastNid&&!n.read);if(nn.length)lastNid=Math.max(lastNid,nn[0].id);
+if(fresh.length){fresh.slice(0,3).forEach(n=>toast(n.msg));await refresh();ui();buildTabs();view()}else{notes=nn;bell()}}
+function closeT(){const o=$("tmv");o.hidden=true;o.innerHTML=""}
+$("tmv").onclick=e=>{if(e.target.id==="tmv")closeT()};
+function showNotes(){const o=$("tmv");o.hidden=false;
+o.innerHTML=`<div class="tm" style="max-width:480px"><div class="hd2 row" style="margin:0"><b>Notifications</b><button class="ghost" id="tx">✕</button></div><div class="gr nl">${notes.map(n=>`<div class="ni${n.read?"":" un"}">${esc(n.msg)}<br><small style="color:var(--mu)">${esc(new Date(n.created_at).toLocaleString("fr-FR"))}</small></div>`).join("")||"<p class='sub'>Aucune notification</p>"}</div></div>`;
+$("tx").onclick=closeT;
+if(notes.some(n=>!n.read))rpc("mark_notifications_read").then(()=>{notes.forEach(n=>n.read=true);bell()}).catch(()=>{})}
+$("bell").onclick=showNotes;
 function ui(){const b=$("open"),un=!!$("pack").querySelector(".cardback");b.disabled=left<1||un;b.textContent=left<1?"Tous tes boosters sont ouverts":un?"Retourne d’abord toutes les cartes":`Ouvrir un booster (${left}/${MAX} restants)`}
 $("open").onclick=async()=>{if(left<1||$("pack").querySelector(".cardback"))return;$("open").disabled=true;let ids;
 try{ids=await rpc("open_booster")}catch(e){ui();return}
@@ -125,9 +150,10 @@ s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="col
 ui();view()};
 $("all").onclick=()=>[...$("pack").querySelectorAll(".cardback")].forEach(b=>b.click());
 $("md").onclick=()=>{$("md").hidden=true};
+function badge(k){return k==="fr"?friends.filter(f=>f.status==="pending"&&f.addressee===me).length:k==="tr"?trades.filter(t=>t.status==="pending"&&t.to_user===me).length:0}
 function buildTabs(){const t=$("tabs");t.innerHTML="";[["coll","Collection"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
-const b=document.createElement("button");b.className="ghost"+(k===tab?" on":"");b.textContent=l;
-b.onclick=async()=>{tab=k;buildTabs();if(k!=="coll")await refresh();view()};t.appendChild(b)});
+const b=document.createElement("button");b.className="ghost"+(k===tab?" on":"");b.textContent=l;const n=badge(k);if(n){const d=document.createElement("span");d.className="dot";d.textContent=n;b.appendChild(d)}
+b.onclick=async()=>{tab=k;if(k!=="coll")await refresh();buildTabs();view()};t.appendChild(b)});
 const lv=document.createElement("button");lv.className="ghost";lv.textContent="🔴 Live";lv.onclick=()=>window.open("https://purcharity.github.io","_blank","noopener");t.appendChild(lv)}
 function view(){const v=$("v");if(tab==="coll")coll(v);else if(tab==="fr")fr(v);else tr(v)}
 function coll(v){
@@ -150,26 +176,49 @@ v.innerHTML=`<div class="bar"><input id="fn" placeholder="Pseudo Twitch d’un a
 <h3>Demandes envoyées</h3>${out.map(f=>row(nm(f.addressee),`<button class="ghost" data-a="del" data-i="${f.id}">Annuler</button>`)).join("")||"<p class='sub'>Aucune</p>"}`;
 $("fa").onclick=async()=>{const n=$("fn").value.trim();if(!n)return;try{await rpc("send_friend_request",{p_name:n})}catch(e){return}await refresh();fr(v)}}
 function tr(v){
-const fl=friends.filter(f=>f.status==="accepted").map(f=>f.requester===me?f.addressee:f.requester);
-const mine=Object.keys(own).filter(k=>own[k]-(pend[k]||0)>0),row=(t,b)=>`<div class="row"><span>${t}</span><span>${b}</span></div>`;
-const txt=t=>`${nm(t.from_user)} → ${nm(t.to_user)} : ${esc(t.give_card)} contre ${esc(t.want_card)}`;
-const inc=trades.filter(t=>t.status==="pending"&&t.to_user===me),out=trades.filter(t=>t.status==="pending"&&t.from_user===me),old=trades.filter(t=>t.status!=="pending").slice(0,8);
-v.innerHTML=fl.length?`<h3>Proposer un échange</h3><div class="bar"><select id="tf">${fl.map(i=>opt(i,names[i])).join("")}</select>
-<select id="tg">${mine.map(k=>opt(k,"Je donne : "+k)).join("")}</select><select id="tw2"></select><button id="tp">Proposer</button></div>
-<h3>Reçus</h3>${inc.map(t=>row(txt(t),`<button data-a="tacc" data-i="${t.id}">Accepter</button> <button class="ghost" data-a="tno" data-i="${t.id}">Refuser</button>`)).join("")||"<p class='sub'>Aucun</p>"}
-<h3>Envoyés</h3>${out.map(t=>row(txt(t),`<button class="ghost" data-a="tno" data-i="${t.id}">Annuler</button>`)).join("")||"<p class='sub'>Aucun</p>"}
-<h3>Historique</h3>${old.map(t=>row(txt(t),esc(t.status))).join("")||"<p class='sub'>Vide</p>"}`:"<p class='sub'>Ajoute d’abord un ami dans l’onglet Amis.</p>";
-if(!fl.length)return;
-const loadWant=async()=>{const r=await sb.from("inventory").select("card_id").eq("user_id",$("tf").value);$("tw2").innerHTML=(r.data||[]).map(x=>opt(x.card_id,"Je veux : "+x.card_id)).join("")};
-$("tf").onchange=loadWant;loadWant();
-$("tp").onclick=async()=>{if(!$("tg").value||!$("tw2").value)return alert("Choisis les deux cartes.");
-try{await rpc("propose_trade",{p_to:$("tf").value,p_give:$("tg").value,p_want:$("tw2").value})}catch(e){return}await refresh();tr(v)}}
+v.innerHTML=`<div class="row"><span><b>Échanges</b><br><small style="color:var(--mu)">Gère tes offres d’échange avec tes amis</small></span><button id="tnew">+ Proposer un échange</button></div><div class="bar" id="tsub"></div><div id="tl"></div>`;
+$("tnew").onclick=pickFriend;
+[["in","Reçues"],["out","Envoyées"],["old","Historique"]].forEach(([k,l])=>{const b=document.createElement("button");b.className="ghost"+(k===trSub?" on":"");b.textContent=l;const n=k==="in"?badge("tr"):0;if(n){const d=document.createElement("span");d.className="dot";d.textContent=n;b.appendChild(d)}b.onclick=()=>{trSub=k;tr(v)};$("tsub").appendChild(b)});
+const L=trades.filter(t=>trSub==="in"?t.status==="pending"&&t.to_user===me:trSub==="out"?t.status==="pending"&&t.from_user===me:t.status!=="pending");
+const tl=$("tl");if(!L.length)tl.innerHTML="<p class='sub'>Aucune offre ici.</p>";L.forEach(t=>tl.appendChild(tradeBox(t)))}
+function tradeBox(t){const it=tradeItems[t.id]||{give:[],want:[]},sent=t.from_user===me,o=sent?t.to_user:t.from_user,d=document.createElement("div");d.className="tc";
+d.innerHTML=`<b>${sent?"Offre envoyée à ":"Offre reçue de "}${nm(o)}${t.parent_id?" (contre-offre)":""}</b><div class="cols"><div><h4>${sent?"Tu donnes":nm(t.from_user)+" donne"}</h4><div class="mini" id="g"></div></div><div><h4>${sent?nm(t.to_user)+" donne":"Tu donnes"}</h4><div class="mini" id="w"></div></div></div><div class="ac"></div>`;
+it.give.forEach(c=>byId[c]&&d.querySelector("#g").appendChild(el(byId[c])));it.want.forEach(c=>byId[c]&&d.querySelector("#w").appendChild(el(byId[c])));
+const a=d.querySelector(".ac"),i=t.id;
+a.innerHTML=t.status!=="pending"?`<span>${esc(ST[t.status]||t.status)}</span>`:sent?`<button class="ghost" data-a="tno" data-i="${i}">Annuler l’offre</button>`:`<button data-a="tacc" data-i="${i}">Accepter</button><button class="ghost" data-a="tctr" data-i="${i}">Contre-offre</button><button class="ghost" data-a="tno" data-i="${i}">Refuser</button>`;return d}
+function pickFriend(){const fl=friends.filter(f=>f.status==="accepted").map(f=>f.requester===me?f.addressee:f.requester),o=$("tmv");o.hidden=false;
+o.innerHTML=`<div class="tm" style="max-width:480px"><div class="hd2 row" style="margin:0"><b>Choisir un ami</b><button class="ghost" id="tx">✕</button></div><div class="sm"><input id="fs" placeholder="Rechercher…" style="width:100%"></div><div class="gr" id="fl"></div></div>`;
+$("tx").onclick=closeT;
+const draw=()=>{const q=$("fs").value.toLowerCase();$("fl").innerHTML=fl.filter(i=>(names[i]||"").toLowerCase().includes(q)).map(i=>`<div class="row"><span>${nm(i)}</span><button class="ghost" data-f="${esc(i)}">Échanger →</button></div>`).join("")||"<p class='sub'>Aucun ami trouvé (ajoute-en dans l’onglet Amis)</p>"};
+$("fs").oninput=draw;draw();$("fl").onclick=e=>{const b=e.target.closest("[data-f]");if(b)openTrade(b.dataset.f,null)}}
+async function openTrade(fid,parent){
+const r=await sb.from("inventory").select("card_id,qty").eq("user_id",fid),theirs={};(r.data||[]).forEach(x=>theirs[x.card_id]=x.qty);
+const S={mine:new Set(),theirs:new Set(),side:"mine",q:"",rar:"all"},o=$("tmv");
+if(parent){const it=tradeItems[parent.id]||{give:[],want:[]};it.want.forEach(c=>{if(own[c])S.mine.add(c)});it.give.forEach(c=>{if(theirs[c])S.theirs.add(c)})}
+const drawGrid=()=>{const g=$("tg"),sel=S[S.side],inv={};
+if(S.side==="mine")Object.keys(own).forEach(k=>{const n=own[k]-(pend[k]||0);if(n>0)inv[k]=n});else Object.assign(inv,theirs);
+g.innerHTML="";Object.keys(inv).map(k=>byId[k]).filter(c=>c&&(S.rar==="all"||c.r===S.rar)&&c.n.toLowerCase().includes(S.q.toLowerCase())).sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{
+const d=el(c,{n:inv[c.n]});d.style.animation="none";d.style.cursor="pointer";if(sel.has(c.n))d.classList.add("sel");d.onclick=()=>{sel.has(c.n)?sel.delete(c.n):sel.add(c.n);drawGrid()};g.appendChild(d)});
+if(!g.children.length)g.innerHTML="<p class='sub'>Aucune carte.</p>";
+$("sum").textContent=`Moi : ${S.mine.size} carte(s) ⇄ ${names[fid]||"?"} : ${S.theirs.size} carte(s)`;$("ts").disabled=!(S.mine.size&&S.theirs.size)};
+const shell=()=>{o.hidden=false;
+o.innerHTML=`<div class="tm"><div class="hd2 row" style="margin:0"><b>${parent?"Contre-offre pour ":"Échanger avec "}${nm(fid)}</b><button class="ghost" id="tx">✕</button></div><div class="sm" id="sum" style="text-align:center;color:var(--mu)"></div>
+<div class="bar" style="margin:0 0 6px"><button class="ghost${S.side==="mine"?" on":""}" id="t1">Mes cartes</button><button class="ghost${S.side==="theirs"?" on":""}" id="t2">Cartes de ${nm(fid)}</button></div>
+<div class="bar" style="margin:0 16px 6px"><input id="q" placeholder="Rechercher…" value="${esc(S.q)}"><select id="rr"><option value="all">Toutes les raretés</option>${Object.keys(R).map(k=>`<option value="${k}"${S.rar===k?" selected":""}>${R[k].l}</option>`).join("")}</select></div>
+<div class="gr"><div class="grid" id="tg"></div></div><div class="ft2"><button class="ghost" id="tc">Annuler</button><button id="ts">Envoyer l’offre</button></div></div>`;
+$("tx").onclick=$("tc").onclick=closeT;$("t1").onclick=()=>{S.side="mine";shell()};$("t2").onclick=()=>{S.side="theirs";shell()};
+$("q").oninput=e=>{S.q=e.target.value;drawGrid()};$("rr").onchange=e=>{S.rar=e.target.value;drawGrid()};
+$("ts").onclick=async()=>{const give=[...S.mine],want=[...S.theirs];
+try{if(parent)await rpc("counter_trade",{p_id:parent.id,p_give:give,p_want:want});else await rpc("propose_trade",{p_to:fid,p_give:give,p_want:want})}catch(e){return}
+closeT();tab="tr";trSub="out";await refresh();buildTabs();view()};drawGrid()};
+shell()}
 $("v").onclick=async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,p_id=+b.dataset.i;
+if(a==="tctr"){const t=trades.find(x=>x.id===p_id);if(t)openTrade(t.from_user,t);return}
 try{if(a==="acc")await rpc("accept_friend",{p_id});else if(a==="del")await rpc("remove_friend",{p_id});else if(a==="tacc")await rpc("accept_trade",{p_id});else await rpc("respond_trade",{p_id})}catch(x){return}
-await refresh();ui();view()};
+await refresh();ui();buildTabs();view()};
 async function boot(){const r=await sb.auth.getSession(),u=r.data.session&&r.data.session.user;
 $("login").hidden=!!u;$("app").hidden=!u;if(!u)return;me=u.id;await refresh();
-$("who").textContent="Connecté : "+(prof?prof.twitch_name:"");ui();buildTabs();view()}
+$("who").textContent="Connecté : "+(prof?prof.twitch_name:"");lastNid=notes.length?notes[0].id:0;ui();buildTabs();bell();view();setInterval(poll,12000)}
 $("tw").onclick=()=>sb.auth.signInWithOAuth({provider:"twitch",options:{redirectTo:location.origin+location.pathname}});
 $("out").onclick=async()=>{await sb.auth.signOut();location.reload()};
 $("sw").onclick=async()=>{await sb.auth.signOut();await sb.auth.signInWithOAuth({provider:"twitch",options:{redirectTo:location.origin+location.pathname,queryParams:{force_verify:"true"}}})};
