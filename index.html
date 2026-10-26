@@ -79,6 +79,8 @@ h3{margin:18px 0 4px}
 .mini{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.mini .card{width:96px}.mini .card img{max-width:52px}.mini .card b{font-size:11px}.mini .card small{font-size:9px}
 .tc{background:#ffffff10;border-radius:14px;padding:12px;margin:10px 0}.tc .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
 .tc h4{margin:0 0 6px;color:var(--mu);font-weight:400;text-align:center}.tc .ac{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.godb{flex-basis:100%;text-align:center;font-family:"Archivo Black",Impact,sans-serif;font-size:clamp(22px,5vw,38px);color:#ffe28a;text-shadow:0 0 18px #ffb629,0 0 40px #ff7a18;animation:pop .6s both}
+.god .cardback{border-color:#ffb629;box-shadow:0 0 22px #ffb629;background:repeating-linear-gradient(45deg,#7a5200,#7a5200 10px,#a87400 10px,#a87400 20px)}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="cards.js"></script>
@@ -144,6 +146,7 @@ function ui(){const b=$("open"),un=!!$("pack").querySelector(".cardback");b.disa
 $("open").onclick=async()=>{if(left<1||$("pack").querySelector(".cardback"))return;$("open").disabled=true;let ids;
 try{ids=await rpc("open_booster")}catch(e){ui();return}
 const p=$("pack");p.innerHTML="";left--;
+const god=ids.every(i=>byId[i]&&["epic","leg","ultra"].includes(byId[i].r));p.classList.toggle("god",god);if(god){const g=document.createElement("div");g.className="godb";g.textContent="✨ GOD PACK ! ✨";p.appendChild(g)}
 ids.forEach((id,i)=>{const c=byId[id],isNew=!own[id];own[id]=(own[id]||0)+1;pend[id]=(pend[id]||0)+1;
 const s=document.createElement("div");s.className="cardback";s.textContent="💜";s.style.animationDelay=i*.1+"s";
 s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="coll")view()};p.appendChild(s)});
