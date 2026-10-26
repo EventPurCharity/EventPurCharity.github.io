@@ -94,7 +94,7 @@ h3{margin:18px 0 4px}
 <div id="login" class="bar"><button id="tw">Se connecter avec Twitch</button></div>
 <div id="app" hidden>
 <div class="bar"><span id="who"></span><button class="ghost" id="sw">Changer de compte</button><button class="ghost" id="out">Déconnexion</button></div>
-<div class="bar"><button id="open"></button><button class="ghost" id="all">Tout révéler</button></div>
+<div class="bar"><button class="ghost" id="odds" title="Chances par booster" style="font-weight:800;font-size:18px;padding:8px 16px">!</button><button id="open"></button><button class="ghost" id="all">Tout révéler</button></div>
 <div class="pack" id="pack"></div>
 <div class="bar" id="tabs"></div>
 <div id="v"></div>
@@ -152,6 +152,10 @@ const s=document.createElement("div");s.className="cardback";s.textContent="💜
 s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="coll")view()};p.appendChild(s)});
 ui();view()};
 $("all").onclick=()=>[...$("pack").querySelectorAll(".cardback")].forEach(b=>b.click());
+$("odds").onclick=()=>{const o=$("tmv");o.hidden=false;
+const L=[["ultra","1 %"],["leg","2 %"],["epic","5 %"],["rare","14 %"]];
+o.innerHTML=`<div class="tm" style="max-width:420px"><div class="hd2 row" style="margin:0"><b>Chances par booster</b><button class="ghost" id="tx">✕</button></div><div class="gr"><p class="sub" style="margin-top:0">Chance qu’un booster contienne une carte de cette rareté. Chaque booster refait les mêmes tirages.</p>${L.map(([k,p])=>`<div class="row"><b style="color:${R[k].c}">${R[k].l}</b><span>${p}</span></div>`).join("")}<div class="row"><b style="color:${R.commun.c}">Commune</b><span>le reste du booster</span></div><div class="row"><b style="color:#ffe28a">✨ God Pack</b><span>0,1 % (1 sur 1000)</span></div><p class="sub">Un booster contient 5 cartes, avec au plus une carte de chaque rareté spéciale. Un God Pack contient 1 légendaire et 4 épiques.</p></div></div>`;
+$("tx").onclick=closeT};
 $("md").onclick=()=>{$("md").hidden=true};
 function badge(k){return k==="fr"?friends.filter(f=>f.status==="pending"&&f.addressee===me).length:k==="tr"?trades.filter(t=>t.status==="pending"&&t.to_user===me).length:0}
 function buildTabs(){const t=$("tabs");t.innerHTML="";const bb=document.createElement("button");bb.className="ghost";bb.id="bell";bb.innerHTML='🔔<span class="dot" id="bn" hidden></span>';bb.onclick=showNotes;t.appendChild(bb);[["coll","Collection"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
