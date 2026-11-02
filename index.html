@@ -231,6 +231,8 @@ try{if(a==="acc")await rpc("accept_friend",{p_id});else if(a==="del")await rpc("
 await refresh();ui();buildTabs();view()};
 async function boot(){const r=await sb.auth.getSession(),u=r.data.session&&r.data.session.user;
 $("login").hidden=!!u;$("app").hidden=!u;if(!u)return;me=u.id;await refresh();
+if(!prof){await sb.rpc("ensure_profile");await refresh()}
+if(!prof){await sb.auth.signOut();alert("Session expirée ou compte supprimé : reconnecte-toi avec Twitch.");location.reload();return}
 $("who").textContent="Connecté : "+(prof?prof.twitch_name:"");lastNid=notes.length?notes[0].id:0;ui();buildTabs();bell();view();setInterval(poll,12000)}
 $("tw").onclick=()=>sb.auth.signInWithOAuth({provider:"twitch",options:{redirectTo:location.origin+location.pathname}});
 $("out").onclick=async()=>{await sb.auth.signOut();location.reload()};
