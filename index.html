@@ -122,12 +122,12 @@ let names={},tab="coll",friends=[],trades=[],prof=null;
 const esc=t=>String(t).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const nm=id=>esc(names[id]||"?"),opt=(v,t)=>`<option value="${esc(v)}">${esc(t)}</option>`;
 async function rpc(n,a){const r=await sb.rpc(n,a||{});if(r.error){alert("Erreur : "+r.error.message);throw r.error}return r.data}
-let trSub="in",tradeItems={},notes=[],lastNid=0;
+let trSub="in",tradeItems={},notes=[],lastNid=0,up={};
 const ST={accepted:"Acceptée",declined:"Refusée",cancelled:"Annulée",countered:"Contre-proposée"};
 async function refresh(){
-const [p,inv,fs,ts,ti,nt]=await Promise.all([sb.from("profiles").select("*").eq("id",me).maybeSingle(),sb.from("inventory").select("card_id,qty").eq("user_id",me),sb.from("friendships").select("*"),sb.from("trades").select("*").order("id",{ascending:false}).limit(60),sb.from("trade_items").select("*"),sb.from("notifications").select("*").order("id",{ascending:false}).limit(30)]);
+const [p,inv,fs,ts,ti,nt,upr]=await Promise.all([sb.from("profiles").select("*").eq("id",me).maybeSingle(),sb.from("inventory").select("card_id,qty").eq("user_id",me),sb.from("friendships").select("*"),sb.from("trades").select("*").order("id",{ascending:false}).limit(60),sb.from("trade_items").select("*"),sb.from("notifications").select("*").order("id",{ascending:false}).limit(30),sb.from("upgrades").select("card_id,tier,qty").eq("user_id",me)]);
 prof=p.data;left=prof?prof.boosters_left:0;own={};(inv.data||[]).forEach(r=>own[r.card_id]=r.qty);
-friends=fs.data||[];trades=ts.data||[];notes=nt.data||[];
+friends=fs.data||[];trades=ts.data||[];notes=nt.data||[];up={};(upr.data||[]).forEach(r=>up[r.card_id+"|"+r.tier]=r.qty);
 tradeItems={};(ti.data||[]).forEach(r=>{(tradeItems[r.trade_id]=tradeItems[r.trade_id]||{give:[],want:[]})[r.side].push(r.card_id)});
 const ids=new Set([me]);friends.forEach(f=>{ids.add(f.requester);ids.add(f.addressee)});trades.forEach(t=>{ids.add(t.from_user);ids.add(t.to_user)});
 const n=await sb.from("profiles").select("id,twitch_name").in("id",[...ids]);names={};(n.data||[]).forEach(r=>names[r.id]=r.twitch_name);bell()}
@@ -158,17 +158,17 @@ o.innerHTML=`<div class="tm" style="max-width:420px"><div class="hd2 row" style=
 $("tx").onclick=closeT};
 $("md").onclick=()=>{$("md").hidden=true};
 function badge(k){return k==="fr"?friends.filter(f=>f.status==="pending"&&f.addressee===me).length:k==="tr"?trades.filter(t=>t.status==="pending"&&t.to_user===me).length:0}
-function buildTabs(){const t=$("tabs");t.innerHTML="";const bb=document.createElement("button");bb.className="ghost";bb.id="bell";bb.innerHTML='🔔<span class="dot" id="bn" hidden></span>';bb.onclick=showNotes;t.appendChild(bb);[["coll","Collection"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
+function buildTabs(){const t=$("tabs");t.innerHTML="";const bb=document.createElement("button");bb.className="ghost";bb.id="bell";bb.innerHTML='🔔<span class="dot" id="bn" hidden></span>';bb.onclick=showNotes;t.appendChild(bb);[["coll","Collection"],["up","Amélioration"],["fr","Amis"],["tr","Échanges"]].forEach(([k,l])=>{
 const b=document.createElement("button");b.className="ghost"+(k===tab?" on":"");b.textContent=l;const n=badge(k);if(n){const d=document.createElement("span");d.className="dot";d.textContent=n;b.appendChild(d)}
 b.onclick=async()=>{tab=k;if(k!=="coll")await refresh();buildTabs();view()};t.appendChild(b)});
 const lv=document.createElement("button");lv.className="ghost";lv.textContent="🔴 Live";lv.onclick=()=>window.open("https://purcharity.github.io","_blank","noopener");t.appendChild(lv);bell()}
-function view(){const v=$("v");if(tab==="coll")coll(v);else if(tab==="fr")fr(v);else tr(v)}
+function view(){const v=$("v");if(tab==="coll")coll(v);else if(tab==="fr")fr(v);else if(tab==="up")upgr(v);else tr(v)}
 function coll(v){
 v.innerHTML='<div class="prog"><span id="pt"></span><div class="meter"><i id="pb"></i></div></div><div class="bar" id="flt"></div><div class="grid" id="grid"></div>';
-[["all","Toutes"]].concat(Object.keys(R).map(k=>[k,R[k].l])).forEach(([k,l])=>{const b=document.createElement("button");b.className="ghost"+(k===filt?" on":"");b.textContent=l;
+[["all","Toutes"]].concat(Object.keys(R).map(k=>[k,R[k].l])).concat([["up","★ Améliorées"]]).forEach(([k,l])=>{const b=document.createElement("button");b.className="ghost"+(k===filt?" on":"");b.textContent=l;
 b.onclick=()=>{filt=k;coll(v)};$("flt").appendChild(b)});
-const g=$("grid");
-CARDS.filter(c=>filt==="all"||c.r===filt).sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{
+const g=$("grid");if(filt==="up")upGrid(g);
+CARDS.filter(c=>filt!=="up"&&(filt==="all"||c.r===filt)).sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{
 const n=(own[c.n]||0)-(pend[c.n]||0),d=el(c,{locked:!n,n});
 if(n){d.style.cursor="pointer";d.onclick=()=>{const m=$("md");m.innerHTML="";m.appendChild(el(c,{desc:1,n}));m.hidden=false}}
 g.appendChild(d)});
@@ -198,6 +198,25 @@ const o=$("tmv"),u=CARDS.filter(c=>inv[c.n]).length;o.hidden=false;
 o.innerHTML=`<div class="tm"><div class="hd2 row" style="margin:0"><b>Collection de ${nm(fid)}</b><button class="ghost" id="tx">✕</button></div><div class="sm" style="text-align:center;color:var(--mu)">${u} / ${CARDS.length} cartes découvertes</div><div class="gr"><div class="grid" id="fg"></div></div></div>`;
 $("tx").onclick=closeT;
 CARDS.slice().sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{const n=inv[c.n]||0;$("fg").appendChild(el(c,{locked:!n,n}))})}
+const COST=[2,2,3],TK=["commun","rare","epic","leg"];
+function upEl(c,t,n){const d=el(Object.assign({},c,{r:TK[t]}),{n});d.querySelector("small").textContent=R[TK[t]].l+" ★";return d}
+function upGrid(g){const L=Object.keys(up).filter(k=>up[k]>0).sort((a,b)=>+b.split("|")[1]-+a.split("|")[1]);
+L.forEach(k=>{const [id,t]=k.split("|"),c=byId[id];if(c)g.appendChild(upEl(c,+t,up[k]))});
+if(!L.length)g.innerHTML="<p class='sub'>Aucune carte améliorée pour l’instant. Va dans l’onglet Amélioration !</p>"}
+function upgr(v){
+v.innerHTML=`<div class="row"><span><b>Amélioration</b><br><small style="color:var(--mu)">Fusionne des cartes identiques pour obtenir une version plus rare. Les cartes améliorées ne sont pas échangeables et se trouvent dans Collection › ★ Améliorées.</small></span></div><div class="row"><small>2 communes → 1 rare · 2 rares → 1 épique · 3 épiques → 1 légendaire. Les cartes légendaires et ultra légendaires ne s’améliorent pas.</small></div><div class="grid" id="ug" style="margin-top:12px"></div>`;
+const g=$("ug"),rows=[];
+CARDS.forEach(c=>{const n0=TK.indexOf(c.r);if(n0<0||n0>2)return;for(let t=n0;t<=2;t++){const q=t===n0?(own[c.n]||0)-(pend[c.n]||0):(up[c.n+"|"+t]||0);if(q>0)rows.push([c,t,q])}});
+rows.sort((a,b)=>(b[2]>=COST[b[1]])-(a[2]>=COST[a[1]])||b[1]-a[1]);
+rows.forEach(([c,t,q])=>{const w=document.createElement("div");w.style.textAlign="center";
+const card=t===TK.indexOf(c.r)?el(c,{n:q}):upEl(c,t,q);card.style.animation="none";
+const info=document.createElement("small");info.style.cssText="display:block;color:var(--mu);margin-top:6px";info.textContent=COST[t]+" → 1 "+R[TK[t+1]].l;
+const b=document.createElement("button");b.style.marginTop="6px";b.textContent=`Améliorer (${q}/${COST[t]})`;b.disabled=q<COST[t];
+b.onclick=()=>{b.disabled=true;doUp(c.n,t)};w.append(card,info,b);g.appendChild(w)});
+if(!rows.length)g.innerHTML="<p class='sub'>Aucune carte améliorable pour l’instant : ouvre des boosters pour obtenir des doublons !</p>"}
+async function doUp(id,t){try{await rpc("upgrade_card",{p_card:id,p_tier:t})}catch(e){view();return}
+await refresh();ui();buildTabs();view();
+const m=$("md");m.innerHTML="";m.appendChild(upEl(byId[id],t+1,up[id+"|"+(t+1)]));m.hidden=false}
 function pickFriend(){const fl=friends.filter(f=>f.status==="accepted").map(f=>f.requester===me?f.addressee:f.requester),o=$("tmv");o.hidden=false;
 o.innerHTML=`<div class="tm" style="max-width:480px"><div class="hd2 row" style="margin:0"><b>Choisir un ami</b><button class="ghost" id="tx">✕</button></div><div class="sm"><input id="fs" placeholder="Rechercher…" style="width:100%"></div><div class="gr" id="fl"></div></div>`;
 $("tx").onclick=closeT;
