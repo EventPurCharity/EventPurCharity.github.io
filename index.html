@@ -109,9 +109,10 @@ let me=null,own={},left=MAX,filt="all",pend={};
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 function load(){let s=null;try{s=JSON.parse(ls("purcards-v2-"+me))}catch(e){}own=(s&&s.own)||{};left=s&&typeof s.left==="number"?s.left:MAX}
 const save=()=>ls("purcards-v2-"+me,JSON.stringify({own,left}));
+const PRES=new Set(["JualkyTV","azzuria_","weeny__","sahaku__","le_max__","clodeau","genki42","Laeticia_M","Aresia"]);
 const FEM=new Set(["madamepoulpy_", "sahaku__", "clodeau", "Laeticia_M", "Aresia", "toospycy", "nekonamc", "foxienox", "liyounee", "hannohi", "ilobee", "mespiaa", "theauu_", "gompubx", "meryyn_", "Acostya", "Mylanne"]); // noms des streameuses, ex : ["azzuria_","Aresia"]
 function desc(c){const D={"madamepoulpy_":"La carte la plus rare de PUR CHARITY, en tête d’affiche de la 4ème édition.","PUREsportFR":"En tête d’affiche de PUR CHARITY, 4ème édition.","PurCharity":"L’événement caritatif Twitch dont 100 % des dons sont reversés aux P’tits Doudous.","Les P’tits Doudous":"Des soignants engagés pour les enfants opérés. Bénéficiaire de PUR CHARITY."};
-const f=FEM.has(c.n);return D[c.n]||`${f?"Streameuse présente":"Streamer présent"} ${c.r==="epic"?"en présentiel":"en distanciel"} pour PUR CHARITY, 4ème édition.`}
+const f=FEM.has(c.n);return D[c.n]||`${f?"Streameuse présente":"Streamer présent"} ${PRES.has(c.n)?"en présentiel":"en distanciel"} pour PUR CHARITY, 4ème édition.`}
 function el(c,o){o=o||{};const d=document.createElement("div");
 d.className="card "+c.r+(o.locked?" locked":"");d.style.setProperty("--c",R[c.r].c);
 d.innerHTML=`<div class="in"><img class="${c.l?"logo":""}" src="${c.i}" alt=""><b>${o.locked?"???":c.n}</b><small>${R[c.r].l}</small>${o.desc?`<p class="ds">${desc(c)}</p>`:""}</div>`+(o.n>1?`<span class="cnt">×${o.n}</span>`:"")+(o.isNew?`<span class="new">NEW</span>`:"");return d}
