@@ -141,10 +141,10 @@ function toast(m){const d=document.createElement("div");d.className="toast";d.te
 async function poll(){if(!me||document.hidden)return;const r=await sb.from("notifications").select("*").order("id",{ascending:false}).limit(30);if(r.error)return;
 const nn=r.data||[],fresh=nn.filter(n=>n.id>lastNid&&!n.read);if(nn.length)lastNid=Math.max(lastNid,nn[0].id);
 if(fresh.length){fresh.slice(0,3).forEach(n=>toast(n.msg));await refresh();ui();buildTabs();view()}else{notes=nn;bell()}}
-function spirit(c){const o=$("sp");o.hidden=false;
+function spirit(c,first){const o=$("sp");o.hidden=false;
 o.innerHTML=`<div class="spb"><p class="spt">✨ ULTRA ULTRA LÉGENDAIRE ✨</p><img src="${c.i}" alt=""><b>${esc(c.n)}</b><button id="spx" hidden>Fermer</button></div>`;
 const a=new Audio("reveille_toi.mp3"),done=()=>{$("spx").hidden=false};
-a.onended=done;a.onerror=done;a.play().catch(done);
+a.onended=done;a.onerror=done;a.play().catch(done);if(!first)done();
 $("spx").onclick=()=>{o.hidden=true;o.innerHTML="";a.pause()}}
 function closeT(){const o=$("tmv");o.hidden=true;o.innerHTML=""}
 $("tmv").onclick=e=>{if(e.target.id==="tmv")closeT()};
@@ -159,11 +159,11 @@ const p=$("pack");p.innerHTML="";left--;
 const god=ids.every(i=>byId[i]&&["epic","leg","ultra"].includes(byId[i].r));p.classList.toggle("god",god);if(god){const g=document.createElement("div");g.className="godb";g.textContent="✨ GOD PACK ! ✨";p.appendChild(g)}
 ids.forEach((id,i)=>{const c=byId[id],isNew=!own[id];own[id]=(own[id]||0)+1;pend[id]=(pend[id]||0)+1;
 const s=document.createElement("div");s.className="cardback";s.textContent="💜";s.style.animationDelay=i*.1+"s";
-s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="coll")view();if(c.r==="uultra")spirit(c)};p.appendChild(s)});
+s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="coll")view();if(c.r==="uultra")spirit(c,true)};p.appendChild(s)});
 ui();view()};
 $("all").onclick=()=>[...$("pack").querySelectorAll(".cardback")].forEach(b=>b.click());
 $("odds").onclick=()=>{const o=$("tmv");o.hidden=false;
-const L=[["ultra","1 % par carte ultra"],["uultra","0,00001 %"],["leg","2 %"],["epic","5 %"],["rare","14 %"]];
+const L=[["ultra","1 % par carte ultra"],["uultra","0,01 %"],["leg","2 %"],["epic","5 %"],["rare","14 %"]];
 o.innerHTML=`<div class="tm" style="max-width:420px"><div class="hd2 row" style="margin:0"><b>Chances par booster</b><button class="ghost" id="tx">✕</button></div><div class="gr"><p class="sub" style="margin-top:0">Chance qu’un booster contienne une carte de cette rareté. Chaque booster refait les mêmes tirages.</p>${L.map(([k,p])=>`<div class="row"><b style="color:${R[k].c}">${R[k].l}</b><span>${p}</span></div>`).join("")}<div class="row"><b style="color:${R.commun.c}">Commune</b><span>le reste du booster</span></div><div class="row"><b style="color:#ffe28a">✨ God Pack</b><span>0,1 % (1 sur 1000)</span></div><p class="sub">Un booster contient 5 cartes. Chaque carte ultra a sa propre chance de 1 %. Un God Pack contient 1 légendaire et 4 épiques.</p></div></div>`;
 $("tx").onclick=closeT};
 $("md").onclick=()=>{$("md").hidden=true};
@@ -180,7 +180,7 @@ b.onclick=()=>{filt=k;coll(v)};$("flt").appendChild(b)});
 const g=$("grid");if(filt==="up")upGrid(g);
 CARDS.filter(c=>filt!=="up"&&(filt==="all"||c.r===filt)).sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{
 const n=(own[c.n]||0)-(pend[c.n]||0),d=el(c,{locked:!n,n});
-if(n){d.style.cursor="pointer";d.onclick=()=>{const m=$("md");m.innerHTML="";m.appendChild(el(c,{desc:1,n}));m.hidden=false}}
+if(n){d.style.cursor="pointer";d.onclick=()=>{if(c.r==="uultra"){spirit(c);return}const m=$("md");m.innerHTML="";m.appendChild(el(c,{desc:1,n}));m.hidden=false}}
 g.appendChild(d)});
 const u=CARDS.filter(c=>(own[c.n]||0)-(pend[c.n]||0)>0).length;
 $("pt").textContent=u+" / "+CARDS.length+" cartes découvertes";$("pb").style.width=(u/CARDS.length*100)+"%"}
