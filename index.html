@@ -81,7 +81,7 @@ h3{margin:18px 0 4px}
 .tc h4{margin:0 0 6px;color:var(--mu);font-weight:400;text-align:center}.tc .ac{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
 .godb{flex-basis:100%;text-align:center;font-family:"Archivo Black",Impact,sans-serif;font-size:clamp(22px,5vw,38px);color:#ffe28a;text-shadow:0 0 18px #ffb629,0 0 40px #ff7a18;animation:pop .6s both}
 .god .cardback{border-color:#ffb629;box-shadow:0 0 22px #ffb629;background:repeating-linear-gradient(45deg,#7a5200,#7a5200 10px,#a87400 10px,#a87400 20px)}
-.card.uultra{--c:#bfe9ff;box-shadow:0 0 30px #fff,0 0 60px #7dd3fc;background:linear-gradient(120deg,#fff,#7dd3fc,#c4b5fd,#fff);background-size:400% 400%;animation:pop .5s both,shine 2s linear infinite}
+.card.unique{--c:#bfe9ff;box-shadow:0 0 30px #fff,0 0 60px #7dd3fc;background:linear-gradient(120deg,#fff,#7dd3fc,#c4b5fd,#fff);background-size:400% 400%;animation:pop .5s both,shine 2s linear infinite}
 .spb{text-align:center;max-width:560px}.spb img{width:min(80vw,460px);border-radius:20px;box-shadow:0 0 40px #fff,0 0 90px #7dd3fc;animation:pop .8s both}
 .spt{font-family:"Archivo Black",Impact,sans-serif;font-size:clamp(16px,4vw,26px);color:#e0f7ff;text-shadow:0 0 18px #7dd3fc,0 0 40px #fff;margin:0 0 14px}
 .spb b{display:block;font-size:28px;margin:14px 0}
@@ -99,6 +99,7 @@ h3{margin:18px 0 4px}
 <div id="app" hidden>
 <div class="bar"><span id="who"></span><button class="ghost" id="sw">Changer de compte</button><button class="ghost" id="out">Déconnexion</button></div>
 <div class="bar"><button class="ghost" id="odds" title="Chances par booster" aria-label="Chances par booster" style="padding:3px;border-radius:50%;display:inline-flex;background:none;color:var(--tx);box-shadow:none"><svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 5.6c-.9 0-1.5.6-1.4 1.5l.5 6.4c.1.6.5.9.9.9s.8-.3.9-.9l.5-6.4c.1-.9-.5-1.5-1.4-1.5z" fill="currentColor"/><circle cx="12" cy="17.4" r="1.5" fill="currentColor"/></svg></button><button id="open"></button><button class="ghost" id="all">Tout révéler</button></div>
+<p class="sub" id="bt" style="margin:-6px 0 14px"></p>
 <div class="pack" id="pack"></div>
 <div class="bar" id="tabs"></div>
 <div id="v"></div>
@@ -107,7 +108,7 @@ h3{margin:18px 0 4px}
 </main><div id="md" class="ov" hidden></div><div id="sp" class="ov" hidden style="z-index:30"></div><div id="tmv" class="ov" hidden></div>
 <script>
 const SUPABASE_URL="https://usyolqinkaogwidvvuhh.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzeW9scWlua2FvZ3dpZHZ2dWhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDE3NDMsImV4cCI6MjEwODUxNzc0M30.bQR0ji_YOnC1uQzQisrlOJfHZuzHCo7r72AsmOgxR48";
-const R={commun:{l:"Commune",w:78,c:"#9aa0b4"},rare:{l:"Rare",w:14,c:"#4da3ff"},epic:{l:"Épique",w:5,c:"#b44dff"},leg:{l:"Légendaire",w:2,c:"#ffb629"},ultra:{l:"Ultra Légendaire",w:1,c:"#ff4da6"},uultra:{l:"Ultra Ultra Légendaire",w:0,c:"#bfe9ff"}};
+const R={commun:{l:"Commune",w:78,c:"#9aa0b4"},rare:{l:"Rare",w:14,c:"#4da3ff"},epic:{l:"Épique",w:5,c:"#b44dff"},leg:{l:"Légendaire",w:2,c:"#ffb629"},ultra:{l:"Ultra Légendaire",w:1,c:"#ff4da6"},unique:{l:"Unique",w:0,c:"#bfe9ff"}};
 const MAX=10,$=id=>document.getElementById(id);
 let me=null,own={},left=MAX,filt="all",pend={};
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
@@ -127,22 +128,30 @@ let names={},tab="coll",friends=[],trades=[],prof=null;
 const esc=t=>String(t).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const nm=id=>esc(names[id]||"?"),opt=(v,t)=>`<option value="${esc(v)}">${esc(t)}</option>`;
 async function rpc(n,a){const r=await sb.rpc(n,a||{});if(r.error){alert("Erreur : "+r.error.message);throw r.error}return r.data}
-let trSub="in",tradeItems={},notes=[],lastNid=0,up={};
+let trSub="in",tradeItems={},notes=[],lastNid=0,up={},nextAt=0,syncing=false;
 const ST={accepted:"Acceptée",declined:"Refusée",cancelled:"Annulée",countered:"Contre-proposée"};
 async function refresh(){
-const [p,inv,fs,ts,ti,nt,upr]=await Promise.all([sb.from("profiles").select("*").eq("id",me).maybeSingle(),sb.from("inventory").select("card_id,qty").eq("user_id",me),sb.from("friendships").select("*"),sb.from("trades").select("*").order("id",{ascending:false}).limit(60),sb.from("trade_items").select("*"),sb.from("notifications").select("*").order("id",{ascending:false}).limit(30),sb.from("upgrades").select("card_id,tier,qty").eq("user_id",me)]);
-prof=p.data;left=prof?prof.boosters_left:0;own={};(inv.data||[]).forEach(r=>own[r.card_id]=r.qty);
+const sy=await sb.rpc("sync_boosters");
+const [p,inv,fs,ts,ti,nt,upr,crd]=await Promise.all([sb.from("profiles").select("*").eq("id",me).maybeSingle(),sb.from("inventory").select("card_id,qty").eq("user_id",me),sb.from("friendships").select("*"),sb.from("trades").select("*").order("id",{ascending:false}).limit(60),sb.from("trade_items").select("*"),sb.from("notifications").select("*").order("id",{ascending:false}).limit(30),sb.from("upgrades").select("card_id,tier,qty").eq("user_id",me),sb.from("cards").select("id,rarity")]);
+prof=p.data;const r0=sy.data&&sy.data[0];left=r0?r0.boosters:(prof?prof.boosters_left:0);nextAt=r0&&r0.next_in?Date.now()+r0.next_in*1000:0;
+(crd.data||[]).forEach(r=>{const k=byId[r.id];if(k&&R[r.rarity])k.r=r.rarity});own={};(inv.data||[]).forEach(r=>own[r.card_id]=r.qty);
 friends=fs.data||[];trades=ts.data||[];notes=nt.data||[];up={};(upr.data||[]).forEach(r=>up[r.card_id+"|"+r.tier]=r.qty);
 tradeItems={};(ti.data||[]).forEach(r=>{(tradeItems[r.trade_id]=tradeItems[r.trade_id]||{give:[],want:[]})[r.side].push(r.card_id)});
 const ids=new Set([me]);friends.forEach(f=>{ids.add(f.requester);ids.add(f.addressee)});trades.forEach(t=>{ids.add(t.from_user);ids.add(t.to_user)});
 const n=await sb.from("profiles").select("id,twitch_name").in("id",[...ids]);names={};(n.data||[]).forEach(r=>names[r.id]=r.twitch_name);bell()}
+function tick(){const e=$("bt");if(!e||!me)return;
+if(left>=MAX||!nextAt){e.textContent="";return}
+const s=Math.max(0,Math.ceil((nextAt-Date.now())/1000));
+e.textContent="Prochain booster dans "+String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+if(s===0&&!syncing){syncing=true;refresh().then(()=>{ui()}).finally(()=>setTimeout(()=>{syncing=false},2000))}}
+setInterval(tick,1000);
 function bell(){if(!$("bn"))return;const n=notes.filter(x=>!x.read).length;$("bn").textContent=n;$("bn").hidden=!n}
 function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),5000)}
 async function poll(){if(!me||document.hidden)return;const r=await sb.from("notifications").select("*").order("id",{ascending:false}).limit(30);if(r.error)return;
 const nn=r.data||[],fresh=nn.filter(n=>n.id>lastNid&&!n.read);if(nn.length)lastNid=Math.max(lastNid,nn[0].id);
 if(fresh.length){fresh.slice(0,3).forEach(n=>toast(n.msg));await refresh();ui();buildTabs();view()}else{notes=nn;bell()}}
 function spirit(c,first){const o=$("sp");o.hidden=false;
-o.innerHTML=`<div class="spb"><p class="spt">✨ ULTRA ULTRA LÉGENDAIRE ✨</p><img src="${c.i}" alt=""><b>${esc(c.n)}</b><button id="spx" hidden>Fermer</button></div>`;
+o.innerHTML=`<div class="spb"><p class="spt">✨ CARTE UNIQUE ✨</p><img src="${c.i}" alt=""><b>${esc(c.n)}</b><button id="spx" hidden>Fermer</button></div>`;
 const a=new Audio("reveille_toi.mp3"),done=()=>{$("spx").hidden=false};
 a.onended=done;a.onerror=done;a.play().catch(done);if(!first)done();
 $("spx").onclick=()=>{o.hidden=true;o.innerHTML="";a.pause()}}
@@ -152,19 +161,19 @@ function showNotes(){const o=$("tmv");o.hidden=false;
 o.innerHTML=`<div class="tm" style="max-width:480px"><div class="hd2 row" style="margin:0"><b>Notifications</b><button class="ghost" id="tx">✕</button></div><div class="gr nl">${notes.map(n=>`<div class="ni${n.read?"":" un"}">${esc(n.msg)}<br><small style="color:var(--mu)">${esc(new Date(n.created_at).toLocaleString("fr-FR"))}</small></div>`).join("")||"<p class='sub'>Aucune notification</p>"}</div></div>`;
 $("tx").onclick=closeT;
 if(notes.some(n=>!n.read))rpc("mark_notifications_read").then(()=>{notes.forEach(n=>n.read=true);bell()}).catch(()=>{})}
-function ui(){const b=$("open"),un=!!$("pack").querySelector(".cardback");b.disabled=left<1||un;b.textContent=left<1?"Tous tes boosters sont ouverts":un?"Retourne d’abord toutes les cartes":`Ouvrir un booster (${left}/${MAX} restants)`}
+function ui(){const b=$("open"),un=!!$("pack").querySelector(".cardback");b.disabled=left<1||un;b.textContent=left<1?"Aucun booster disponible":un?"Retourne d’abord toutes les cartes":`Ouvrir un booster (${left>MAX?left:left+"/"+MAX})`;tick()}
 $("open").onclick=async()=>{if(left<1||$("pack").querySelector(".cardback"))return;$("open").disabled=true;let ids;
 try{ids=await rpc("open_booster")}catch(e){ui();return}
-const p=$("pack");p.innerHTML="";left--;
+const p=$("pack");p.innerHTML="";if(left>=MAX)nextAt=Date.now()+300000;left--;
 const god=ids.every(i=>byId[i]&&["epic","leg","ultra"].includes(byId[i].r));p.classList.toggle("god",god);if(god){const g=document.createElement("div");g.className="godb";g.textContent="✨ GOD PACK ! ✨";p.appendChild(g)}
 ids.forEach((id,i)=>{const c=byId[id],isNew=!own[id];own[id]=(own[id]||0)+1;pend[id]=(pend[id]||0)+1;
 const s=document.createElement("div");s.className="cardback";s.textContent="💜";s.style.animationDelay=i*.1+"s";
-s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="coll")view();if(c.r==="uultra")spirit(c,true)};p.appendChild(s)});
+s.onclick=()=>{pend[id]--;s.replaceWith(el(c,{desc:1,isNew}));ui();if(tab==="coll")view();if(c.r==="unique")spirit(c,true)};p.appendChild(s)});
 ui();view()};
 $("all").onclick=()=>[...$("pack").querySelectorAll(".cardback")].forEach(b=>b.click());
 $("odds").onclick=()=>{const o=$("tmv");o.hidden=false;
-const L=[["ultra","1 % par carte ultra"],["uultra","0,01 %"],["leg","2 %"],["epic","5 %"],["rare","14 %"]];
-o.innerHTML=`<div class="tm" style="max-width:420px"><div class="hd2 row" style="margin:0"><b>Chances par booster</b><button class="ghost" id="tx">✕</button></div><div class="gr"><p class="sub" style="margin-top:0">Chance qu’un booster contienne une carte de cette rareté. Chaque booster refait les mêmes tirages.</p>${L.map(([k,p])=>`<div class="row"><b style="color:${R[k].c}">${R[k].l}</b><span>${p}</span></div>`).join("")}<div class="row"><b style="color:${R.commun.c}">Commune</b><span>le reste du booster</span></div><div class="row"><b style="color:#ffe28a">✨ God Pack</b><span>0,1 % (1 sur 1000)</span></div><p class="sub">Un booster contient 5 cartes. Chaque carte ultra a sa propre chance de 1 %. Un God Pack contient 1 légendaire et 4 épiques.</p></div></div>`;
+const L=[["unique","0,01 %"],["ultra","0,05 % par carte"],["leg","0,1 % par carte"],["epic","15 %"],["rare","25 %"]];
+o.innerHTML=`<div class="tm" style="max-width:420px"><div class="hd2 row" style="margin:0"><b>Chances par booster</b><button class="ghost" id="tx">✕</button></div><div class="gr"><p class="sub" style="margin-top:0">Chance qu’un booster contienne une carte de cette rareté. Chaque booster refait les mêmes tirages.</p>${L.map(([k,p])=>`<div class="row"><b style="color:${R[k].c}">${R[k].l}</b><span>${p}</span></div>`).join("")}<div class="row"><b style="color:${R.commun.c}">Commune</b><span>le reste du booster</span></div><div class="row"><b style="color:#ffe28a">✨ God Pack</b><span>0,1 % (1 sur 1000)</span></div><p class="sub">Un booster contient 5 cartes. Les cartes unique, ultra et légendaires ont chacune leur propre chance. Tu récupères 1 booster toutes les 5 minutes (maximum 10). Un God Pack contient 1 légendaire et 4 épiques.</p></div></div>`;
 $("tx").onclick=closeT};
 $("md").onclick=()=>{$("md").hidden=true};
 function badge(k){return k==="fr"?friends.filter(f=>f.status==="pending"&&f.addressee===me).length:k==="tr"?trades.filter(t=>t.status==="pending"&&t.to_user===me).length:0}
@@ -180,7 +189,7 @@ b.onclick=()=>{filt=k;coll(v)};$("flt").appendChild(b)});
 const g=$("grid");if(filt==="up")upGrid(g);
 CARDS.filter(c=>filt!=="up"&&(filt==="all"||c.r===filt)).sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{
 const n=(own[c.n]||0)-(pend[c.n]||0),d=el(c,{locked:!n,n});
-if(n){d.style.cursor="pointer";d.onclick=()=>{if(c.r==="uultra"){spirit(c);return}const m=$("md");m.innerHTML="";m.appendChild(el(c,{desc:1,n}));m.hidden=false}}
+if(n){d.style.cursor="pointer";d.onclick=()=>{if(c.r==="unique"){spirit(c);return}const m=$("md");m.innerHTML="";m.appendChild(el(c,{desc:1,n}));m.hidden=false}}
 g.appendChild(d)});
 const u=CARDS.filter(c=>(own[c.n]||0)-(pend[c.n]||0)>0).length;
 $("pt").textContent=u+" / "+CARDS.length+" cartes découvertes";$("pb").style.width=(u/CARDS.length*100)+"%"}
@@ -208,22 +217,25 @@ const o=$("tmv"),u=CARDS.filter(c=>inv[c.n]).length;o.hidden=false;
 o.innerHTML=`<div class="tm"><div class="hd2 row" style="margin:0"><b>Collection de ${nm(fid)}</b><button class="ghost" id="tx">✕</button></div><div class="sm" style="text-align:center;color:var(--mu)">${u} / ${CARDS.length} cartes découvertes</div><div class="gr"><div class="grid" id="fg"></div></div></div>`;
 $("tx").onclick=closeT;
 CARDS.slice().sort((a,b)=>Object.keys(R).indexOf(b.r)-Object.keys(R).indexOf(a.r)).forEach(c=>{const n=inv[c.n]||0;$("fg").appendChild(el(c,{locked:!n,n}))})}
-const COST=[2,2,3],TK=["commun","rare","epic","leg"];
+const COST=[10,10,10,50],TK=["commun","rare","epic","leg","unique"];
 function upEl(c,t,n){const d=el(Object.assign({},c,{r:TK[t]}),{n});d.querySelector("small").textContent=R[TK[t]].l+" ★";return d}
 function upGrid(g){const L=Object.keys(up).filter(k=>up[k]>0).sort((a,b)=>+b.split("|")[1]-+a.split("|")[1]);
 L.forEach(k=>{const [id,t]=k.split("|"),c=byId[id];if(c)g.appendChild(upEl(c,+t,up[k]))});
 if(!L.length)g.innerHTML="<p class='sub'>Aucune carte améliorée pour l’instant. Va dans l’onglet Amélioration !</p>"}
 function upgr(v){
-v.innerHTML=`<div class="row"><span><b>Amélioration</b><br><small style="color:var(--mu)">Fusionne des cartes identiques pour obtenir une version plus rare. Les cartes améliorées ne sont pas échangeables et se trouvent dans Collection › ★ Améliorées.</small></span></div><div class="row"><small>2 communes → 1 rare · 2 rares → 1 épique · 3 épiques → 1 légendaire. Les cartes légendaires et ultra légendaires ne s’améliorent pas.</small></div><div class="grid" id="ug" style="margin-top:12px"></div>`;
+v.innerHTML=`<div class="row"><span><b>Amélioration</b><br><small style="color:var(--mu)">Fusionne des cartes identiques pour obtenir une version plus rare. Les cartes améliorées ne sont pas échangeables et se trouvent dans Collection › ★ Améliorées.</small></span><button id="upall">⚡ Tout améliorer</button></div><div class="row"><small>10 communes → 1 rare · 10 rares → 1 épique · 10 épiques → 1 légendaire · 50 légendaires → 1 Unique. Les cartes ultra légendaires et uniques ne s’améliorent pas.</small></div><div class="grid" id="ug" style="margin-top:12px"></div>`;
 const g=$("ug"),rows=[];
-CARDS.forEach(c=>{const n0=TK.indexOf(c.r);if(n0<0||n0>2)return;for(let t=n0;t<=2;t++){const q=t===n0?(own[c.n]||0)-(pend[c.n]||0):(up[c.n+"|"+t]||0);if(q>0)rows.push([c,t,q])}});
+CARDS.forEach(c=>{const n0=TK.indexOf(c.r);if(n0<0||n0>3)return;for(let t=n0;t<=3;t++){const iq=t===n0?Math.max(0,(own[c.n]||0)-(pend[c.n]||0)):0,q=iq+(up[c.n+"|"+t]||0);if(q>0)rows.push([c,t,q,iq])}});
 rows.sort((a,b)=>(b[2]>=COST[b[1]])-(a[2]>=COST[a[1]])||b[1]-a[1]);
-rows.forEach(([c,t,q])=>{const w=document.createElement("div");w.style.textAlign="center";
-const card=t===TK.indexOf(c.r)?el(c,{n:q}):upEl(c,t,q);card.style.animation="none";
+rows.forEach(([c,t,q,iq])=>{const w=document.createElement("div");w.style.textAlign="center";
+const card=iq>0?el(c,{n:q}):upEl(c,t,q);card.style.animation="none";
 const info=document.createElement("small");info.style.cssText="display:block;color:var(--mu);margin-top:6px";info.textContent=COST[t]+" → 1 "+R[TK[t+1]].l;
 const b=document.createElement("button");b.style.marginTop="6px";b.textContent=`Améliorer (${q}/${COST[t]})`;b.disabled=q<COST[t];
 b.onclick=()=>{b.disabled=true;doUp(c.n,t)};w.append(card,info,b);g.appendChild(w)});
-if(!rows.length)g.innerHTML="<p class='sub'>Aucune carte améliorable pour l’instant : ouvre des boosters pour obtenir des doublons !</p>"}
+if(!rows.length)g.innerHTML="<p class='sub'>Aucune carte améliorable pour l’instant : ouvre des boosters pour obtenir des doublons !</p>";
+$("upall").onclick=async()=>{if($("pack").querySelector(".cardback"))return alert("Retourne d’abord toutes les cartes du booster.");
+$("upall").disabled=true;let n;try{n=await rpc("upgrade_all")}catch(e){view();return}
+await refresh();ui();buildTabs();view();toast(n?n+" amélioration(s) effectuée(s) !":"Rien à améliorer pour l’instant.")}}
 async function doUp(id,t){try{await rpc("upgrade_card",{p_card:id,p_tier:t})}catch(e){view();return}
 await refresh();ui();buildTabs();view();
 const m=$("md");m.innerHTML="";m.appendChild(upEl(byId[id],t+1,up[id+"|"+(t+1)]));m.hidden=false}
